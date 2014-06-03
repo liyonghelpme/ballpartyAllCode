@@ -15,6 +15,8 @@
 #include "HttpModel.h"
 #include "Match.h"
 #include <vector>
+#include "User.h"
+
 using namespace std;
 
 
@@ -165,8 +167,22 @@ public:
     void clearImageId() {
         imgId = 1;
     }
+    void setLookOther(bool lo){
+        lookOther = lo;
+    }
+    bool getLookOther() {
+        return lookOther;
+    }
+    int otherId;
+    User otherUser;
+
+    bool initUserDataYet;
+    void clearState();
     
 private:
+    bool lookOther;
+    
+    
     void fetchOver(bool isSuc, string s, void *param);
     int gender;
     string area;

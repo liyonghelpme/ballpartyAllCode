@@ -328,6 +328,9 @@ public:
     void setContentScaleFactor(float scaleFactor);
     float getContentScaleFactor(void);
 
+    
+    void setContext();
+    
 public:
     /** CCScheduler associated with this director
      @since v2.0

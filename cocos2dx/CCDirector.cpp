@@ -64,6 +64,8 @@ THE SOFTWARE.
 #include "platform/CCImage.h"
 #include "CCEGLView.h"
 #include "CCConfiguration.h"
+//#include <OpenGLES/EAGL.h>
+
 
 
 
@@ -244,7 +246,9 @@ void CCDirector::setGLDefaultValues(void)
     // set other opengl default values
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
-
+void CCDirector::setContext() {
+    //[EAGLContext setCurrentContext: EAGL];
+}
 // Draw the Scene
 void CCDirector::drawScene(void)
 {

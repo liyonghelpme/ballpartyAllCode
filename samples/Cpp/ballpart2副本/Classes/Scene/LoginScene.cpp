@@ -50,6 +50,8 @@ void LoginScene::onEnter(){
     
     //登陆区域
     UIPanel* login_panel = (UIPanel*)loginWidget->getChildByTag(4);
+    UIPanel* bg_panel = (UIPanel*)loginWidget->getChildByTag(63);
+
     
     //用户名
     m_userName = CCEditBox::create(CCSize(320,50), CCScale9Sprite::createWithSpriteFrameName("button.png"));

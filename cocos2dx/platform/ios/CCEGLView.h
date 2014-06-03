@@ -27,10 +27,9 @@ THE SOFTWARE.
 
 #include "platform/CCCommon.h"
 #include "platform/CCEGLViewProtocol.h"
-
 NS_CC_BEGIN
 
-
+//class EAGLView
 
 class CC_DLL CCEGLView : public CCEGLViewProtocol
 {
@@ -48,7 +47,11 @@ public:
     virtual void setIMEKeyboardState(bool bOpen);
     
     static CCEGLView* sharedOpenGLView();
+    
+    //EAGLView *getEAGLView();
 
+    void setContext();
+    
 };
 
 NS_CC_END

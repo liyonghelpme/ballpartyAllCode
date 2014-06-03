@@ -40,6 +40,11 @@ CCEGLView::~CCEGLView()
 {
 
 }
+/*
+EAGLView *CCEGLView::getEAGLView(){
+    return [EAGLView sharedEGLView];
+}
+ */
 
 bool CCEGLView::isOpenGLReady()
 {
@@ -64,6 +69,10 @@ void CCEGLView::end()
     [[EAGLView sharedEGLView] removeFromSuperview];
 }
 
+void CCEGLView::setContext(){
+    [EAGLContext setCurrentContext: [[EAGLView sharedEGLView] context]];
+    
+}
 
 void CCEGLView::swapBuffers()
 {

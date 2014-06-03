@@ -17,6 +17,8 @@
 //#include "md5.h"
 
 #include <string>
+#include <ctype.h>
+#include "regex.h"
 
 using namespace cocos2d;
 using namespace ui;
@@ -83,7 +85,7 @@ private:
 	virtual void editBoxReturn(cocos2d::extension::CCEditBox* editBox);
     
     void registPress(CCObject *pSender,TouchEventType type);
-    void finishPress(CCObject *pSender,TouchEventType type);
+    void finishPress(CCObject *pSender,TouchEventType type); 
     void listviewPress(CCObject *pSender,TouchEventType type);
     void worldCupStrongPress(CCObject *pSender,TouchEventType type);
     void refereePress(CCObject *pSender,TouchEventType type);

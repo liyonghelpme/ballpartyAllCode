@@ -535,9 +535,11 @@ void ChatView::closeChat() {
 
 void ChatView::onBack(cocos2d::CCObject *obj, TouchEventType tt){
     //未初始化完成 不能 点击按钮
-    if (state != 2) {
-        return;
-    }
+    
+    CCLog("chatView stata is %d", state);
+    //if (state != 2) {
+    //    return;
+    //}
     switch (tt) {
         case cocos2d::ui::TOUCH_EVENT_BEGAN:
         {
@@ -629,9 +631,9 @@ void ChatView::onAdd(cocos2d::CCObject *obj, TouchEventType tt){
 }
 
 void ChatView::onChatInfo(CCObject *obj, TouchEventType tt){
-    if (state != 2) {
-        return;
-    }
+    //if (state != 2) {
+    //    return;
+   // }
     
     switch (tt) {
         case cocos2d::ui::TOUCH_EVENT_BEGAN:

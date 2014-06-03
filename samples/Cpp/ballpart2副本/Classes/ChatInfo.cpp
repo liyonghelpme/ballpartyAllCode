@@ -9,6 +9,7 @@
 #include "ChatInfo.h"
 #include "Logic.h"
 #include "User.h"
+#include "ConfigView.h"
 
 CCScene *ChatInfo::scene(){
     CCScene *scene = CCScene::create();
@@ -117,6 +118,8 @@ void ChatInfo::update(float dt){
             
             char bf1[256];
             User user;
+            //{"state":1,"data":[{"id":3,"phone_number":"13128513872","avatar":null,"bio":null,"real_name":"tudou","like_team":2}]}
+            
             for (int i =0; i < b.Size(); i++) {
                 user.setChatInfo(b[i]);
                 
@@ -138,6 +141,8 @@ void ChatInfo::update(float dt){
                     sprintf(bf1, "flags/%d.png", user.flagId);
                     Button *but = static_cast<Button*>(UIHelper::seekWidgetByName(l1, "Button_7"));
                     but->loadTextureNormal(bf1);
+                    but->addTouchEventListener(this, toucheventselector(ChatInfo::onPeople));
+                    but->setTag(user.uid);
                     
                     
                     //b2->setEnabled(false);
@@ -149,9 +154,13 @@ void ChatInfo::update(float dt){
                     name->setText(user.realName);
                     
                     
+                    
+                    
                     sprintf(bf1, "flags/%d.png", user.flagId);
                     Button *but = static_cast<Button*>(UIHelper::seekWidgetByName(l2, "Button_7"));
                     but->loadTextureNormal(bf1);
+                    but->addTouchEventListener(this, toucheventselector(ChatInfo::onPeople));
+                    but->setTag(user.uid);
                 }  else {
                     l3->setEnabled(true);
                     //b3->setEnabled(true);
@@ -161,10 +170,27 @@ void ChatInfo::update(float dt){
                     sprintf(bf1, "flags/%d.png", user.flagId);
                     Button *but = static_cast<Button*>(UIHelper::seekWidgetByName(l3, "Button_7"));
                     but->loadTextureNormal(bf1);
+                    but->addTouchEventListener(this, toucheventselector(ChatInfo::onPeople));
+                    but->setTag(user.uid);
                 }
             }
             
         }
+    }
+}
+
+void ChatInfo::onPeople(cocos2d::CCObject *obj, TouchEventType tt){
+    switch (tt) {
+        case cocos2d::ui::TOUCH_EVENT_ENDED:
+        {
+            Logic::getInstance()->setLookOther(true);
+            Logic::getInstance()->otherId = ((CCNode*)obj)->getTag();
+            CCDirector::sharedDirector()->pushScene(getTransScene(ConfigView::scene()));
+        }
+            break;
+            
+        default:
+            break;
     }
 }
 

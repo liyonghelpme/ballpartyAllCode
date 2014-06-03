@@ -30,6 +30,8 @@ public:
     ~WorldCup();
     
 private:
+    Button *chatButton;
+    
     void refreshMatchState(Layout *, int itemId);
     
     void updateCompetitionTime(float dt);

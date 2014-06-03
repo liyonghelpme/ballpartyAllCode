@@ -54,6 +54,9 @@ initMatchYet(false)
 , dayRange(30.0)
 , fetchInfoState(0)
 , gender(0)
+, lookOther(false)
+, initUserDataYet(false)
+
 {
     srand(time(NULL));
     uid = rand()%1000;
@@ -466,7 +469,12 @@ void Logic::fetchInfo() {
         char buf[256];
         UserService *us  = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
         User *user = us->getUser();
-        sprintf(buf, "user/%d", user->uid);
+        if (!lookOther) {
+            sprintf(buf, "user/%d", user->uid);
+        }else {
+            sprintf(buf, "user/%d", otherId);
+        }
+        
         std::map<string, string> postData;
         hm->addRequest(buf, "GET", postData, this, MYHTTP_SEL(Logic::fetchOver), NULL);
     }
@@ -480,14 +488,29 @@ void Logic::fetchInfo() {
 void Logic::fetchOver(bool isSuc, string s, void *param) {
     fetchInfoState = 2;
     if (isSuc) {
+        CCLog("fetchOver info %s", s.c_str());
+        
         rapidjson::Document d;
         d.Parse<0>(s.c_str());
         const rapidjson::Value &bd = d["data"];
-        UserService *us  = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
-        User *user = us->getUser();
-        user->setData(bd);
+        if (d["state"].GetInt() == 0) {
+            fetchInfoState = 0;
+            return;
+        }
         
+        if (lookOther) {
+            otherUser.setData(bd);
+            lookOther = false;
+            
+        }else {
+            UserService *us  = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
+            User *user = us->getUser();
+            user->setData(bd);
+            initUserDataYet = true;
+            
+        }
         
+        /*
         realName = bd["realName"].GetString();
         phoneNumber = bd["phoneNumber"].GetString();
         if(!bd["bio"].IsNull()) {
@@ -498,6 +521,9 @@ void Logic::fetchOver(bool isSuc, string s, void *param) {
         area = bd["area"].GetString();
         referrer = bd["referrer"].GetString();
         CCLog(referrer.c_str());
+        */
+        
+        
         
         
         //UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
@@ -507,3 +533,13 @@ void Logic::fetchOver(bool isSuc, string s, void *param) {
         fetchInfoState = 0;
     }
 }
+
+
+void Logic::clearState() {
+    initUserDataYet = false;
+    curInScene = NULL;
+    fetchInfoState = 0;
+}
+
+
+

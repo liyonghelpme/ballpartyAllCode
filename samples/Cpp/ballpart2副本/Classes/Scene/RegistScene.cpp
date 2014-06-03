@@ -74,6 +74,112 @@ string trim(string& s){
     return s.erase(0, s.find_first_not_of(drop));
 }
 
+// 检验是否包含特殊字符
+bool checkTextChineseOrNumberOrLetter(string str)
+{
+    int badNum = 0;
+    
+    int size = str.length();
+    if (size <= 0)
+        return false;
+    
+    char* pStr = new char[size];
+    
+    strcpy(pStr, str.c_str());
+    for (int i = 0; i < size; i++)
+    {
+        if (!(pStr[i]>=0 && pStr[i]<=127))
+            continue;
+        if (ispunct(pStr[i]))
+        {
+            badNum ++;
+        }
+    }
+    delete[] pStr;
+    bool res = true;
+    if (badNum > 0)
+    {
+        res = false;
+    }
+    return res;
+}
+
+bool checkTextString(string str){
+    const char *cn = ".*(“|”|《|》|•|【|】|…).*";
+    regmatch_t subs1[10];
+    regex_t stuRT1;
+    regcomp(&stuRT1, cn, REG_EXTENDED);
+    int err1 = regexec(&stuRT1, str.c_str(), (size_t)10, subs1, 0);
+    if (!err1) {
+        regfree(&stuRT1);
+        return false;
+    }
+    
+    
+    const char *eset = "^[A-Za-z0-9\u4e00-\u9fa5]+$";
+    //regex_t re;
+    regmatch_t   subs[10];
+    regex_t stuRT;
+    
+    regcomp(&stuRT, eset, REG_EXTENDED);
+    int err = regexec(&stuRT, str.c_str(), (size_t)10, subs, 0);
+    
+    if (err) {
+        
+        regfree(&stuRT);
+        return false;
+    }
+    else
+    {
+        regfree(&stuRT);
+        return true;
+    }
+}
+
+bool delSpecialChar(string str)
+{
+    string m_str = str;
+    //string m_str = "asdf=";
+    CCLog("delSpecialChar");
+    //有几个字符与输入法有关；
+    const char *punc=" ～！@＃¥％……&＊（）——＋＝－｀｜、｝］｛［“‘：；？／》。《，";
+    int len=strlen(punc);
+    
+    
+    string::iterator it;
+    
+    
+    for(int i=0; i<len; i++){
+//        str.erase(0, len);
+//        if( *(punc+i)== ch ){
+//            return true;
+//        }
+        CCLog("%c+++", *(punc+i));
+        
+        string::iterator it;
+//        for(it = m_str.begin(); it != m_str.end();){
+//            if((*it >= '0' && *it <= '9') || (*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z')){
+//                CCLog("IT::%c", *it);
+//                ++it;
+//                
+//            }else{
+//                
+//                if (*(punc+i)== *it){
+//                    CCLog("%c===", *it);
+//                    CCLog("%c+++", *(punc+i));
+//                    //m_str.erase(it);
+//                    return  false;
+//                    
+//                }else{
+//                    ++it;
+//                }
+//            }
+//        }
+    }
+    
+    return true;
+}
+
 CCScene* RegistScene::scene()
 {
 	CCScene* scene = NULL;
@@ -476,10 +582,14 @@ void RegistScene::registPress( CCObject *pSender,TouchEventType type )
         string v_nick = m_realName->getText();
         string v_area = m_areaBox->getText();
         
-        
         //选项不为空
         if(v_password=="" || trim(v_nick)=="" || trim(v_area) == ""){
             CCMessageBox("所有选项不能为空！", "提示");
+            return;
+        }
+        
+        if(!checkTextString(v_nick)){
+            CCMessageBox("昵称不能包含有特殊字符!", "提示");
             return;
         }
         
@@ -925,7 +1035,9 @@ void RegistScene::editBoxEditingDidEnd( cocos2d::extension::CCEditBox* editBox )
 
 void RegistScene::editBoxTextChanged( cocos2d::extension::CCEditBox* editBox, const std::string& text )
 {
-    //CCLog(text.c_str());
+    CCLog(text.c_str());
+//    editBox->setText("•");
+    //editBox->setText(delSpecialChar(text).c_str());
     
 }
 

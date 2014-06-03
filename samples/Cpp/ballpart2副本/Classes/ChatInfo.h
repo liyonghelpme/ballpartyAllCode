@@ -24,6 +24,8 @@ public:
     CREATE_FUNC(ChatInfo);
 
 private:
+    void onPeople(CCObject*, TouchEventType);
+    
     void onBack(CCObject *obj, TouchEventType tt);
     
     Widget *w;

@@ -171,6 +171,7 @@ bool WorldCup::init(){
     notStartCom->setEnabled(false);
     notStartCom->setVisible(true);
     
+    chatButton = static_cast<Button*>(UIHelper::seekWidgetByName(finCompete, "chatButton"));
     
     
     Layout *lp = static_cast<Layout*>(UIHelper::seekWidgetByName(w, "cupPanel_0"));
@@ -539,6 +540,16 @@ void WorldCup::initItem(Match &c, float *delay, int *date, int *ord) {
     CCLog("chat button init");
     Button *realBnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "realBnt"));
     
+    
+    //屏幕高度和设计高度的比例 按照比例调整一下item的Y方向高度比例 固定Y高度
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    float hc = 960/vs.height;
+    CCPoint lsz = ly->getSizePercent();
+    lsz.y = lsz.y*hc;
+    //缩放高度Y
+    ly->setSizePercent(lsz);
+    
+    
     char buf[512];
     int t1 = getTeamId(c.host_name);
     if (t1 != -1) {
@@ -718,6 +729,9 @@ void WorldCup::updateCompetitionTime(float dt) {
         }
     }
 }
+
+//刷新比赛状态  比赛的 是否完成 以及 当前时间 chatButton 高度
+
 //测试方法： 每次插入不同的比赛
 void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     CCLog("refreshMatchState %d %d", oldly->getTag(), itemId);
@@ -777,6 +791,16 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     Label *state = static_cast<Label*>(UIHelper::seekWidgetByName(ly, "state"));
     Button *bnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "chatButton"));
     CCLog("chat button init");
+    
+    //屏幕高度和设计高度的比例 按照比例调整一下item的Y方向高度比例 固定Y高度
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    float hc = 960/vs.height;
+    CCPoint lsz = ly->getSizePercent();
+    lsz.y = lsz.y*hc;
+    //缩放高度Y
+    ly->setSizePercent(lsz);
+    
+    
     Button *realBnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "realBnt"));
     
     char buf[512];

@@ -27,6 +27,8 @@ public:
     static cocos2d::CCScene* scene();
     CREATE_FUNC(ConfigView);
 private:
+    bool isOtherUser;
+    
     void onBack(CCObject *, TouchEventType);
     void onQuit(CCObject *, TouchEventType);
     void initView();

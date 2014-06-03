@@ -29,6 +29,8 @@ bool ConfigView::init(){
     {
         return false;
     }
+    isOtherUser = Logic::getInstance()->getLookOther();
+    
     getYet = false;
     
     CCSize size = CCDirector::sharedDirector()->getVisibleSize();
@@ -50,6 +52,10 @@ bool ConfigView::init(){
     
     Button *loginOut = static_cast<Button*>(UIHelper::seekWidgetByName(w, "quit"));
     loginOut->addTouchEventListener(this, toucheventselector(ConfigView::onQuit));
+    if (isOtherUser) {
+        loginOut->setEnabled(false);
+    }
+    
     
     scheduleUpdate();
     return true;
@@ -61,10 +67,15 @@ void ConfigView::initView() {
     char buf[512];
     sprintf(buf, "flags/%d.png", Logic::getInstance()->getFlagId());
     head->loadTextureNormal(buf);
-    adjustScale(head, 70, 70);
-    
-    UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
-    User *user = us->getUser();
+    //adjustScale(head, 70, 70);
+    User *user;
+    if (isOtherUser) {
+        user = &Logic::getInstance()->otherUser;
+        
+    }else {
+        UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
+        user = us->getUser();
+    }
     
     TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
     nn->setTouchEnabled(false);
@@ -148,7 +159,9 @@ void ConfigView::onQuit(cocos2d::CCObject *obj, TouchEventType tt){
             pDirector->replaceScene(pScene);
             
             //退出登录清理状态
-            curInScene = NULL;
+            
+            Logic::getInstance()->clearState();
+            
         }
             break;
         case cocos2d::ui::TOUCH_EVENT_CANCELED:
@@ -164,13 +177,36 @@ void ConfigView::onQuit(cocos2d::CCObject *obj, TouchEventType tt){
 void ConfigView::update(float dt){
     if (!getYet) {
         //getYet = true;
-        if (Logic::getInstance()->fetchInfoState == 0) {
-            Logic::getInstance()->fetchInfo();
-        } else if(Logic::getInstance()->fetchInfoState == 2) {
-            getYet = true;
-            initView();
-            
+        if (isOtherUser) {
+            if (Logic::getInstance()->fetchInfoState == 0) {
+                Logic::getInstance()->fetchInfo();
+            } else if(Logic::getInstance()->fetchInfoState == 2) {
+                getYet = true;
+                //下次重新获取用户数据 便于获取其他用户数据
+                Logic::getInstance()->fetchInfoState = 0;
+                initView();
+                
+            }
+        //获取自己的信息
+        }else {
+            if (Logic::getInstance()->initUserDataYet) {
+                getYet = true;
+                //下次重新获取用户数据 便于获取其他用户数据
+                Logic::getInstance()->fetchInfoState = 0;
+                initView();
+            }else {
+                if (Logic::getInstance()->fetchInfoState == 0) {
+                    Logic::getInstance()->fetchInfo();
+                } else if(Logic::getInstance()->fetchInfoState == 2) {
+                    getYet = true;
+                    //下次重新获取用户数据 便于获取其他用户数据
+                    Logic::getInstance()->fetchInfoState = 0;
+                    initView();
+                    
+                }
+            }
         }
+        
     }
     
 }

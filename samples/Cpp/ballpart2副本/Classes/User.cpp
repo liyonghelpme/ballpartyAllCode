@@ -17,6 +17,8 @@ User::User()
 }
 
 void User::setChatInfo(const rapidjson::Value &bd) {
+    uid = bd["id"].GetInt();
+    
     if (bd["real_name"].IsString()) {
         realName = bd["real_name"].GetString();
         loginName = bd["real_name"].GetString();
@@ -56,11 +58,11 @@ void User::setData(const rapidjson::Value &bd) {
     referrer = bd["referrer"].GetString();
     referrer_nick = referrer;
     
-    /*
+    
     if (bd["referrer_nick"].IsString()) {
         referrer_nick = bd["referrer_nick"].GetString();
     }
-     */
+     
     
 }
 /*

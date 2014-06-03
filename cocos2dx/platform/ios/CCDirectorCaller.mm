@@ -27,6 +27,10 @@
 
 #import "CCES2Renderer.h"
 #import <OpenGLES/EAGL.h>
+#import "CCEGLView.h"
+
+
+
 
 
 
@@ -98,17 +102,19 @@ static id s_sharedDirectorCaller;
         [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 }
 
-//TODO: 修复bug https://github.com/cocos2d/cocos2d-x/pull/5263/files
 
-                      
+//TODO: 修复bug https://github.com/cocos2d/cocos2d-x/pull/5263/files
 -(void) doCaller: (id) sender
 {
     //cocos2d::CCDirector::sharedDirector()->mainLoop();
     
     cocos2d::CCDirector* director = cocos2d::CCDirector::sharedDirector();
     //
-    //[EAGLContext setCurrentContext: [(CCEAGLView*)director->getOpenGLView()->getEAGLView() context]];
+    //[EAGLContext setCurrentContext: [director->getOpenGLView()->getEAGLView() context]];
+    director->getOpenGLView()->setContext();
     director->mainLoop();
 }
+
+
 
 @end
