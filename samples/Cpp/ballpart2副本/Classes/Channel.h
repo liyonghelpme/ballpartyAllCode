@@ -47,7 +47,7 @@ public:
     Channel();
     //void getHistoryMessage();
     
-    bool sendMessage(string content, int contentType);
+    bool sendMessage(string content, int contentType, int msgId);
     
     void onReceiveMessage();
     

@@ -21,6 +21,18 @@
 #include "ServiceCenter.h"
 
 
+float textMargin = 35;
+float imgWidthMargin = 40;
+float imgHeightMargin = 25;
+
+float FONT_SIZE = 30;
+float INPUT_SIZE = 30;
+
+float HEAD_SIZE = 70;
+
+float TEXT_WIDTH = 395;
+
+
 CCScene *ChatView::scene(int mID){
     CCScene *scene = CCScene::create();
     
@@ -46,7 +58,10 @@ CCScene *ChatView::scene(int mID){
 }
 //TODO: Channel delete 
 ChatView::~ChatView(){
+    errorMsg->release();
     testLabel->release();
+    chatText->release();
+    
     //voiceMap->release();
 }
 void ChatView::onFinishPlay(cocos2d::CCObject *obj){
@@ -65,6 +80,8 @@ void ChatView::closeRedis() {
     if (closeYet) {
         return;
     }
+    Logic::getInstance()->inChatRoom = false;
+    
     //等再次进入重新连接接收redis
     startReceiveRedis(-1);
     initReceiveYet = false;
@@ -73,7 +90,7 @@ void ChatView::closeRedis() {
     
     //发出一条离开聊天室的消息
     string emp;
-    bool suc = m_channel->sendMessage(emp, Channel::QUIT_TYPE);
+    bool suc = m_channel->sendMessage(emp, Channel::QUIT_TYPE, -1);
     //关闭发送redis 连接
     //closeSendRedisC();
     startSendRedis(-1);
@@ -83,6 +100,8 @@ void ChatView::closeRedis() {
 
 void ChatView::onExit(){
     curInScene = NULL;
+    CCLog("ChatView onExit");
+    
     playVoice(-1);
     
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "finishPlay");
@@ -96,7 +115,7 @@ void ChatView::onExit(){
 
 //停止所有语音播放
 void ChatView::onPauseGame(cocos2d::CCObject *obj) {
-    CCLog("pause game");
+    CCLog("ChatView pause game");
     playVoice(-1);
     
     //直接退出房间即可
@@ -157,7 +176,10 @@ void ChatView::onEnter() {
     tf = static_cast<UITextField*>(UIHelper::seekWidgetByName(w, "word"));
     tf->setMulLine(true);
     tf->setMaxLength(125);
-    tf->setFontSize(30);
+    tf->setFontSize(INPUT_SIZE);
+    oldPos = tf->getPosition();
+    
+    
     
     //根据系统判定 字符数量  根据系统高度判定
     //CCSize *fs = CCDirector::sharedDirector()->getVisibleSize();
@@ -172,9 +194,9 @@ void ChatView::onEnter() {
     //都限制70个字符
     //if(fabs(fs.height-960.0) < 1) {
         tf->setMaxLength(70);
-        testLabel->setFontSize(25);
-        lab->setFontSize(25);
-        lab2->setFontSize(25);
+        testLabel->setFontSize(FONT_SIZE);
+        lab->setFontSize(FONT_SIZE);
+        lab2->setFontSize(FONT_SIZE);
         CCLog("itouch 4 set font size");
     //}
     
@@ -268,11 +290,29 @@ void ChatView::onEnter() {
     otherImg->setEnabled(false);
     
     
+    
+    
     otherVoice = static_cast<Layout*>(UIHelper::seekWidgetByName(w, "otherVoice"));
     ohead = static_cast<ImageView*>(UIHelper::seekWidgetByName(otherVoice, "ohead"));
     ovoice = static_cast<Button*>(UIHelper::seekWidgetByName(otherVoice, "ovoice"));
     otherVoice->setEnabled(false);
     ovoice->addTouchEventListener(this, toucheventselector(ChatView::onOtherVoice));
+    
+    
+    ImageView *myImgHead = static_cast<ImageView*>(UIHelper::seekWidgetByName(myImg, "head2"));
+    ImageView *otherImgHead = static_cast<ImageView*>(UIHelper::seekWidgetByName(otherImg, "head"));
+    ImageView *mhead = static_cast<ImageView*>(UIHelper::seekWidgetByName(myvoice, "head3"));
+    
+    CCSize hsz = CCSizeMake(HEAD_SIZE, HEAD_SIZE);
+    //oneWord
+    head->setSize(hsz);
+    head2->setSize(hsz);
+    ohead->setSize(hsz);
+    mhead->setSize(hsz);
+    myImgHead->setSize(hsz);
+    otherImgHead->setSize(hsz);
+    
+    
     
     //反馈页面不能看用户信息
     Button *cinfo = static_cast<Button*>(UIHelper::seekWidgetByName(w, "selfConfig"));
@@ -332,6 +372,11 @@ bool ChatView::init(){
     {
         return false;
     }
+    Logic::getInstance()->inChatRoom = true;
+    
+    errorMsg = CCArray::create();
+    errorMsg->retain();
+    
     
     closeYet = false;
     
@@ -343,7 +388,7 @@ bool ChatView::init(){
     recordTime = 0;
     isRecording = false;
     
-    marginHeight = 40;
+    marginHeight = 30;
     
     waitScrollFrame = 5;
     
@@ -375,8 +420,12 @@ bool ChatView::init(){
     
     setSizeYet = false;
     //设置显示的文本的大小和高度
-    testLabel = CCLabelTTF::create("", "", 30);
+    testLabel = CCLabelTTF::create("", "", INPUT_SIZE);
     testLabel->retain();
+    
+    chatText = CCLabelTTF::create("", "", INPUT_SIZE);
+    chatText->retain();
+    
     
     CCSize size = CCDirector::sharedDirector()->getVisibleSize();
     UILayer *lay = UILayer::create();
@@ -476,6 +525,10 @@ void ChatView::closeChat() {
     if (CCDirector::sharedDirector()->getNextScene() != NULL) {
         return;
     }
+    Logic::getInstance()->inChatRoom = false;
+    
+    
+    //Logic::getInstance()->clearMsg();
     
     closeYet = true;
     CCLog("back start listen channel");
@@ -485,7 +538,7 @@ void ChatView::closeChat() {
     
     //发出一条离开聊天室的消息
     string emp;
-    bool suc = m_channel->sendMessage(emp, Channel::QUIT_TYPE);
+    bool suc = m_channel->sendMessage(emp, Channel::QUIT_TYPE, -1);
     
     //关闭发送redis 连接
     //closeSendRedisC();
@@ -1057,6 +1110,8 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             CCLog("send Msg %d", text.length());
             
             tf->setText("");
+            tf->setPosition(oldPos);
+            
             //发送之后调整高度
             CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
             //float nw = 400*fs.width/640;
@@ -1082,8 +1137,11 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             
             //宽度存在一个bug 需要+1 才能显示完整的文字 高度也可能存在这个浮点数bug
             CCSize tsz = testLabel->getContentSize();
-            tsz.width++;
-            tsz.height++;
+            //tsz.width += 3;
+            if (tsz.width > lwid) {
+                tsz.width = lwid;
+            }
+            tsz.height += 2;
             CCLog("testlabel Size %f %f", tsz.width, tsz.height);
             
             lab2->setText("");
@@ -1095,16 +1153,18 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             
             CCSize ws = lab2->getSize();
             CCSize hsz = head2->getSize();
-            float height = std::max(ws.height, hsz.height);
-            height += marginHeight;
+            
    
             
             UIPanel *pan = static_cast<UIPanel*>(twoWord->clone());
             ImageView *head2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head2"));
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
             //高度至少大于70 才没有明显的缺口 背景框
-            chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+20, 70)));
+            chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
             
+            CCSize cbsize = chatBack->getSize();
+            float height = std::max(cbsize.height, hsz.height);
+            height += marginHeight;
             
             char buf[512];
             
@@ -1214,10 +1274,13 @@ void ChatView::onMsg(bool isSuc, std::string s, void *param) {
         }
         
         
-        CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
-        float lwid = fs.width-114-10-30;
-        UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
-        User *user = us->getUser();
+        //CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
+        //float lwid = fs.width-114-10-30;
+        //每行14个汉字 每个 30  520 长度
+        //float lwid = 475;
+        
+        //UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
+        //User *user = us->getUser();
         
         Message msg;
         //消息长度太长就不要 前面的历史消息了 显示不超过4条历史消息
@@ -1267,8 +1330,10 @@ void ChatView::onMsg(bool isSuc, std::string s, void *param) {
 }
 float ChatView::getLabelWidth() {
     CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
-    float lwid = fs.width-114-90;
-    return lwid;
+    //float lwid = fs.width-114-90;
+    return TEXT_WIDTH;
+    
+    //return lwid;
 }
 //插入历史消息不用 考虑是不是用户本身
 void ChatView::insertMessage(Message *message, int ord) {
@@ -1390,15 +1455,14 @@ void ChatView::insertMessage(Message *message, int ord) {
             
             CCSize ws = lab2->getSize();
             CCSize hsz = head2->getSize();
-            float height = std::max(ws.height, hsz.height);
-            height += marginHeight;
+            
             
             
             UIPanel *pan = static_cast<UIPanel*>(twoWord->clone());
             ImageView *head2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head2"));
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
             //高度至少大于70 才没有明显的缺口 背景框
-            chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+20, 70)));
+            chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
             
             
             char buf[512];
@@ -1408,6 +1472,9 @@ void ChatView::insertMessage(Message *message, int ord) {
             sprintf(buf, "flags/%d.png", user->flagId);
             head2->loadTexture(buf);
             
+            CCSize cbSize = chatBack->getSize();
+            float height = std::max(cbSize.height, hsz.height);
+            height += marginHeight;
             
             pan->setEnabled(true);
             pan->setSize(CCSizeMake(fs.width, height));
@@ -1541,7 +1608,7 @@ void ChatView::insertMessage(Message *message, int ord) {
             img->setSize(img->getContentSize());
             
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
-            chatBack->setSize(CCSizeMake(std::max(140.0f,img->getContentSize().width+30), std::max(120.0f, img->getContentSize().height+40)));
+            chatBack->setSize(CCSizeMake(std::max(140.0f,img->getContentSize().width+imgWidthMargin), std::max(120.0f, img->getContentSize().height+imgHeightMargin)));
             
             
             
@@ -1643,10 +1710,12 @@ void ChatView::insertMessage(Message *message, int ord) {
         ImageView *head = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head"));
         head->loadTexture(buf);
         ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
-        chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+20, 70)));
+        chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
         
         
         float height = std::max(chatBack->getSize().height, hsz.height)+marginHeight;
+        
+        
         pan->setEnabled(true);
         pan->setSize(CCSizeMake(fs.width, height));
         pan->setSizeType(SIZE_ABSOLUTE);
@@ -1765,7 +1834,7 @@ void ChatView::insertMessage(Message *message, int ord) {
         img->loadTexture(key, UI_TEX_TYPE_LOCAL);
         img->setSize(img->getContentSize());
         ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
-        chatBack->setSize(CCSizeMake(std::max(140.0f, img->getContentSize().width+30), std::max(120.0f, img->getContentSize().height+40)));
+        chatBack->setSize(CCSizeMake(std::max(140.0f, img->getContentSize().width+imgWidthMargin), std::max(120.0f, img->getContentSize().height+imgHeightMargin)));
         
         
         float height = std::max(hsz.height, chatBack->getSize().height)+marginHeight;
@@ -2015,8 +2084,17 @@ void ChatView::trySendMsg(string &con, Channel::MESSAGE_TYPE mt, ImageView *erro
     //if (m_channel->cid == FEEDBACK) {
         
     //}
-    bool suc = m_channel->sendMessage(con, mt);
+    int msgId = Logic::getInstance()->getMsgId();
+    bool suc = m_channel->sendMessage(con, mt, msgId);
+    
     CCLog("trySendMsg ok %d", suc);
+    //加入队列成功才会 检测是否发送成功
+    if (suc) {
+        errorMsg->addObject(error);
+        error->setTag(msgId);
+    }
+    
+    
     if (!suc) {
         error->setVisible(true);
     }else
@@ -2087,7 +2165,7 @@ void ChatView::sendImg(){
             img->setSize(img->getContentSize());
             
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
-            chatBack->setSize(CCSizeMake(std::max(140.0f,img->getContentSize().width+30), std::max(120.0f, img->getContentSize().height+40)));
+            chatBack->setSize(CCSizeMake(std::max(140.0f,img->getContentSize().width+imgWidthMargin), std::max(120.0f, img->getContentSize().height+imgHeightMargin)));
             
             
             
@@ -2155,12 +2233,37 @@ void ChatView::updateMidSize(float diff) {
     
 }
 
+void ChatView::checkError() {
+    for (int i=0; i < errorMsg->count();) {
+        CCNode *error = (CCNode*)errorMsg->objectAtIndex(i);
+        int msgId = error->getTag();
+        int state = getMsgState(msgId);
+        
+        //int state = Logic::getInstance()->getMsgState(msgId);
+        //CCLog("check Error %d %d", msgId, state);
+        //成功
+        if (state == 1) {
+            error->setVisible(false);
+            errorMsg->removeObjectAtIndex(0);
+        }else if(state == 2) {
+            error->setVisible(true);
+            errorMsg->removeObjectAtIndex(0);
+        //不存在
+        }else if(state == 1) {
+            error->setVisible(false);
+            errorMsg->removeObjectAtIndex(0);
+        //正在发送中 == 0
+        }else {
+            break;
+        }
+    }
+}
 
 
 void ChatView::update(float diff){
     updateMidSize(diff);
     updateRecordTime(diff);
-    
+    checkError();
     sleepTime -= diff;
     //下一帧才开始 scroll
     //需要等待 listView 调用了 visit sortAllChildren 之后 refreshView 成功 更新了界面 才可以 驱动 scrollToBottom 来执行 这时候 内部容器的size才会变化
@@ -2374,8 +2477,27 @@ void ChatView::adjustSize() {
     startAdjustSize(fs.height*oldSizePer.y);
 }
 
+
 void ChatView::adjustBut() {
     string con = tf->getStringValue();
+    UICCTextField *rd = tf->getRenderer();
+    CCSize inputSize = tf->getSize();
+    CCLog("input size is %f %f", inputSize.width, inputSize.height);
+    chatText->setString("");
+    chatText->setDimensions(CCSizeMake(inputSize.width, 0));
+    chatText->setString(con.c_str());
+    CCSize lsz = chatText->getContentSize();
+    
+    //多行 和 单行 文本  位置不同
+    if (lsz.height >= 70) {
+        tf->setPosition(ccp(oldPos.x, oldPos.y-15));
+    }else {
+        tf->setPosition(ccp(oldPos.x, oldPos.y));
+    }
+    
+    
+    
+    //调整高度
     if (con.length() > 0) {
         add->setEnabled(false);
         send->setEnabled(true);

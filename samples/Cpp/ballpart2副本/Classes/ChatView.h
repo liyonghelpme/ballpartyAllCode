@@ -50,6 +50,12 @@ public:
     virtual void onEnter();
     virtual void onExit();
 private:
+    CCPoint oldPos;
+    
+    CCArray *errorMsg;
+    void checkError();
+    
+    CCLabelTTF *chatText;
     
     void closeRedis();
     

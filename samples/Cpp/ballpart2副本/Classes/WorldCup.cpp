@@ -58,6 +58,10 @@ static char *teamName[] = {
     "智利",
 };
 
+//旗帜尺寸
+float flagSize = 45;
+const char *emptyName = "gui/empty.png";
+
 int getTeamId(string tn) {
     for (int i = 0 ; i < 32; i++) {
         string tc = teamName[i];
@@ -555,19 +559,27 @@ void WorldCup::initItem(Match &c, float *delay, int *date, int *ord) {
     if (t1 != -1) {
         sprintf(buf, "flags/%d.png", t1);
         hImg->loadTexture(buf);
-        adjustScale(hImg, 56, 56);
+        adjustScale(hImg, flagSize, flagSize);
     }else {
-        hImg->setVisible(false);
+        //hImg->setVisible(false);
+        sprintf(buf, emptyName);
+        hImg->loadTexture(buf);
+        adjustScale(hImg, flagSize, flagSize);
     }
+    
     CCLog("getTeamId 1 over");
     
     int t2 = getTeamId(c.guest_name);
     if (t2 != -1) {
         sprintf(buf, "flags/%d.png", t2);
         gImg->loadTexture(buf);
-        adjustScale(gImg, 56, 56);
+        adjustScale(gImg, flagSize,flagSize);
     }else {
-        gImg->setVisible(false);
+        //gImg->setVisible(false);
+        
+        sprintf(buf, emptyName);
+        gImg->loadTexture(buf);
+        adjustScale(gImg, flagSize, flagSize);
     }
     
     host->setText(c.host_name);
@@ -575,7 +587,8 @@ void WorldCup::initItem(Match &c, float *delay, int *date, int *ord) {
     CCLog("getTeamId 2 over");
     
     
-    bnt->getNormal()->runAction(CCSequence::create(CCDelayTime::create(*delay), CCFadeIn::create(0.2), NULL));
+    //bnt->getNormal()->runAction(CCSequence::create(CCDelayTime::create(*delay), CCFadeIn::create(0.2), NULL));
+    
     *delay += 0.2;
     
     if (curstate == 0) {
@@ -804,17 +817,47 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     Button *realBnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "realBnt"));
     
     char buf[512];
-    sprintf(buf, "flags/%d.png", getTeamId(c->host_name));
-    hImg->loadTexture(buf);
-    adjustScale(hImg, 80, 80);
     
-    sprintf(buf, "flags/%d.png", getTeamId(c->guest_name));
+    int t1 = getTeamId(c->host_name);
+    if (t1 != -1) {
+        sprintf(buf, "flags/%d.png", t1);
+        hImg->loadTexture(buf);
+        adjustScale(hImg, flagSize, flagSize);
+    }else {
+        //hImg->setVisible(false);
+        sprintf(buf, emptyName);
+        hImg->loadTexture(buf);
+        adjustScale(hImg, flagSize, flagSize);
+    }
+    
+    //sprintf(buf, "flags/%d.png", );
+    //hImg->loadTexture(buf);
+    //adjustScale(hImg, flagSize, flagSize);
+    
+    //sprintf(buf, "flags/%d.png", getTeamId(c->guest_name));
+    
+    int t2 = getTeamId(c->guest_name);
+    if (t2 != -1) {
+        sprintf(buf, "flags/%d.png", t2);
+        gImg->loadTexture(buf);
+        adjustScale(gImg, flagSize,flagSize);
+    }else {
+        //gImg->setVisible(false);
+        
+        sprintf(buf, emptyName);
+        gImg->loadTexture(buf);
+        adjustScale(gImg, flagSize, flagSize);
+    }
+    
+    /*
     gImg->loadTexture(buf);
-    adjustScale(gImg, 80, 80);
+    adjustScale(gImg, flagSize, flagSize);
+    */
+     
     host->setText(c->host_name);
     client->setText(c->guest_name);
     
-    bnt->getNormal()->runAction(CCFadeIn::create(0.2));
+    //bnt->getNormal()->runAction(CCFadeIn::create(0.2));
     
     
     char minfo[256];

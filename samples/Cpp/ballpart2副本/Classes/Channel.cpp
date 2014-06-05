@@ -79,7 +79,7 @@ void Channel::setData(Match *mat) {
     
 }
 
-bool Channel::sendMessage(string content, int contentType) {
+bool Channel::sendMessage(string content, int contentType, int msgId) {
     //TODO: 构造Message
     UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
     User *user = us->getUser();
@@ -179,7 +179,7 @@ bool Channel::sendMessage(string content, int contentType) {
         
         return true;
     }else {
-        bool res =  sendMsgC(doc.c_str(), cid);
+        bool res =  sendMsgC(doc.c_str(), cid, msgId);
         if (!res) {
             CCNotificationCenter::sharedNotificationCenter()->postNotification("netError");
             CCLog("频道发送 消息出错");

@@ -39,15 +39,15 @@ void HttpModel::init(string url){
 void HttpModel::onNetState(cocos2d::CCObject *obj) {
     if (errorTime < 0) {
         //第一次试验网络状态 出错 则忽略本次错误 底层恢复一下状态
-        if (firstTry) {
-            errorTime = tryTime;
-            firstTry = false;
-        }else {
+        //if (firstTry) {
+        //    errorTime = tryTime;
+        //    firstTry = false;
+        //}else {
             CCMessageBox("网络错误!", "提示");
             errorTime = tryTime;
             tryTime *= 2;
             tryTime = std::min(tryTime, 120.0f);
-        }
+        //}
     }
 }
 

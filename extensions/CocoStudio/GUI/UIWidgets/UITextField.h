@@ -174,6 +174,13 @@ public:
     void closeIME() {
         _textFieldRenderer->closeIME();
     }
+    
+    
+    UICCTextField *getRenderer() {
+        return _textFieldRenderer;
+    }
+    
+    
 private:
     bool shint;
     

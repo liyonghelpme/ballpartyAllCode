@@ -391,7 +391,7 @@ void RegistScene::onEnter(){
      m_realName->setFontSize(23);
      m_realName->setAnchorPoint(CCPointZero);
      m_realName->setPlaceHolder("请输入姓名");
-     m_realName->setMaxLength(8);
+     m_realName->setMaxLength(6);
      m_realName->setInputMode(kEditBoxInputModeAny);
      m_realName->setReturnType(kKeyboardReturnTypeDone);
      m_realName->setFontColor(ccc3(80,80,80));
@@ -589,7 +589,7 @@ void RegistScene::registPress( CCObject *pSender,TouchEventType type )
         }
         
         if(!checkTextString(v_nick)){
-            CCMessageBox("昵称不能包含有特殊字符!", "提示");
+            CCMessageBox("昵称错误（只能包含数字、字母、中文）", "提示");
             return;
         }
         

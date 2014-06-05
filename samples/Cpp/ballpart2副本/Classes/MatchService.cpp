@@ -10,11 +10,14 @@
 #include "Match.h"
 #include "Logic.h"
 
+//invoke 调用的时候 将 使用半闭合 半开 区间 [today ,tomorrow)
+
+
 MatchService::MatchService(string url)
 : m_requestYet(false)
 , m_testNum(0)
 , m_searchYet(false)
-, m_dayRange(5.0)
+, m_dayRange(20.0)
 , m_initMatchYet(false)
 , ServiceBase(url)
 , noOld(false)
@@ -149,7 +152,7 @@ void MatchService::realRequestMatch(){
     
     //从今天开始的比赛
     char t1[512] = {};
-    sprintf(t1, "match/%lld/%lld", (long long)today, (long long)tomorrow);
+    sprintf(t1, "match/%lld/%lld", (long long)today, (long long)tomorrow-1);
     
     invoke(t1, "GET", postData, this, MYHTTP_SEL(MatchService::initMatchOver), NULL);
 }
@@ -275,7 +278,7 @@ bool MatchService::realFetchOldMatch(){
     
     
     char t1[512];
-    sprintf(t1, "match/%lld/%lld", (long long)aday, (long long)bday);
+    sprintf(t1, "match/%lld/%lld", (long long)aday, (long long)bday-1);
     
     
     invoke(t1, "GET", postData, this, MYHTTP_SEL(MatchService::initOldMatchOver), NULL);
@@ -304,7 +307,7 @@ bool MatchService::realFetchNewMatch(){
     
     CCLog("fetch new match %llf %llf", aday, bday);
     char t1[512];
-    sprintf(t1, "match/%lld/%lld", (long long)aday, (long long)bday);
+    sprintf(t1, "match/%lld/%lld", (long long)aday, (long long)bday-1);
     
     invoke(t1, "GET", postData, this, MYHTTP_SEL(MatchService::initNewMatchOver), NULL);
     

@@ -184,8 +184,13 @@ bool getLostTime(long long *lt) {
 }
 //接收数据的 线程 crash 掉了 重新进入
 -(void)myThreadMainMethod:(id)obj{
+    if (!Logic::getInstance()->inChatRoom) {
+        return;
+    }
+    
+    
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSLog(@"run thread");
+    NSLog(@"run receive thread");
     //Warning connect must in thread itself
     chatInfo = [[NSMutableArray alloc] init];
     /*
@@ -215,6 +220,7 @@ bool getLostTime(long long *lt) {
     NSLog(@"start thread");
     NSLog([NSString stringWithFormat:@"%d", subchannelId]);
     
+    
     while (!over) {
         
         if (redis == nil) {
@@ -239,6 +245,13 @@ bool getLostTime(long long *lt) {
         }
         
         NSLog(@"start receive new message");
+        //如果不再聊天室则 不用接收消息
+        //subscribe的time out 应该不去设定的
+        if (!Logic::getInstance()->inChatRoom) {
+            NSLog(@"quit chat room");
+            
+            break;
+        }
         
         id retVal = [redis getReply];
         //服务器关闭的消息是什么 格式的 retVal不是这样
@@ -287,7 +300,10 @@ bool getLostTime(long long *lt) {
         NSLog(@"finish reply");
         
     }
-    NSLog(@"close thread");
+    
+    //sleep(5);
+    
+    NSLog(@"close receive thread");
     NSLog([NSString stringWithFormat:@"%d", subchannelId]);
     
     //线程清理 有问题？
@@ -295,6 +311,7 @@ bool getLostTime(long long *lt) {
     
     //TODO:: 释放存储池子 和 自身有问题？
     [chatInfo release];
+    
     [pool release];
     
     //退出聊天场景删除自身对象 为什么会 crash
@@ -544,12 +561,12 @@ void sendText(std::string text){
     
     NSLog(@"send Text suc");
 }
-bool sendMsgC(const char*msg, int mid) {
+bool sendMsgC(const char*msg, int mid, int msgId) {
     //return [[TestRedis sharedRedis] sendMsg:msg m:mid];
     if (sender != NULL) {
-        [(TestRedis*)sender sendMsg:msg m:mid];
+        return [(TestRedis*)sender sendMsg:msg m:mid mi:msgId];
     }
-    return true;
+    return false;
 }
 
 
@@ -584,17 +601,21 @@ void closeSendRedisC() {
 
 //初始化发送线程
 -(void)initSendThread{
+    NSLog(@"initSendThread");
     [NSThread detachNewThreadSelector:@selector(sendThread) toTarget:self withObject:nil];
 }
 
 void startSendRedis(int cid) {
-    CCLog("startSendRedis %d", cid);
+    NSLog(@"startSendRedis");
+    
     //释放上一个聊天室的数据 新建一个 新的 接收器
     if (sender != NULL) {
         //结束进程
-        [(TestRedis*)sender stopSend];
-        //[receive dealloc];
-        sender = NULL;
+        @synchronized(sender) {
+            [(TestRedis*)sender stopSend];
+            //[receive dealloc];
+            sender = NULL;
+        }
     }
     
     //只是关闭一个频道 发射者
@@ -611,30 +632,81 @@ void startSendRedis(int cid) {
 //所有频道实用 一个 公共的发送线程
 //建立新的对象 来发送消息
 -(void) stopSend {
-    sendOver = true;
+    //线程已经结束 则 释放自身
+    if (sendOver) {
+        [self release];
+    //线程未结束则 设置要释放自身
+    }else
+        sendOver = true;
+}
+struct MsgObj {
+    int msgId;
+    NSString *msg;
+};
+
+
+int getMsgState(int msgId){
+    if (sender != NULL) {
+        @synchronized(sender) {
+            return Logic::getInstance()->getMsgState(msgId);
+        }
+    }
+    
+    return -1;
 }
 
 -(void)sendThread {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    NSAutoreleasePool *pool;
+    @synchronized(self) {
+        pool = [[NSAutoreleasePool alloc] init];
+    }
     NSLog(@"run send thread");
     //Warning connect must in thread itself
-    sendQueue = [[NSMutableArray alloc] init];
-    [self connect];
+    
+    @synchronized(self) {
+        sendQueue = [[NSMutableArray alloc] init];
+        [self connect];
+        
+        //设置发送超时 时间
+        [self->redis setTimeout];
+    }
+    
+    
+    
+    //网络连接断开 上层重新连接 发起请求
     while (!sendOver) {
         if (redis == nil) {
-            [self connect];
+            /*
+            @synchronized(self) {
+                [self connect];
+                [self->redis setTimeout];
+            }
+            sleep(5);
+            
             continue;
+             */
+            break;
         }
         
+        
         NSString *msg = NULL;
-        @synchronized(sendQueue){
+        //struct MsgObj p;
+        @synchronized(self){
             if (sendQueue.count > 0) {
-                msg = (NSString*)[sendQueue objectAtIndex:0];
+                //[[sendQueue objectAtIndex:0] getValue:&p];
+                //msg = p.msg;
+                //[sendQueue removeObjectAtIndex:0];
+                msg = [sendQueue objectAtIndex:0];
                 [msg retain];
                 [sendQueue removeObjectAtIndex:0];
+                
             }
         }
         if (sendOver) {
+            if (msg != NULL) {
+                [msg release];
+                msg = NULL;
+            }
             break;
         }
         
@@ -649,12 +721,29 @@ void startSendRedis(int cid) {
             NSLog(@"send commd");
             //NSLog(cmd);
             
-            id retVal = [redis command:cmd];
+            id retVal;
+            //@synchronized(self) {
+            //阻塞性发送不能 加锁 否则 主线程也会被卡住
+            retVal = [redis command:cmd];
+            //}
             if (retVal == nil) {
                 NSLog(@"send Message error reconnect");
+                
                 [redis dealloc];
                 redis = nil;
                 //return false;
+                //发送失败
+                
+                //TODO: 加锁 访问 Logic 中得map数据对象
+                @synchronized(self){
+                    //Logic::getInstance()->setMsgState(p.msgId, 2);
+                }
+            }else {
+                //加锁访问状态
+                //发送成功
+                @synchronized(self) {
+                    //Logic::getInstance()->setMsgState(p.msgId, 1);
+                }
             }
             NSLog([NSString stringWithFormat:@"send Message over %@", retVal]);
         }else{
@@ -663,17 +752,107 @@ void startSendRedis(int cid) {
         }
     }
     
-    [sendQueue release];
+    //等待最后一个消息发送出去 再 退出线程
+    //sleep(5);
+    
+    //释放未发送出去的消息
+    
+    //struct MsgObj p;
+    @synchronized(self) {
+        NSLog(@"message count");
+        NSLog([NSString stringWithFormat:@"%d", sendQueue.count ]);
+        
+        /*
+        for(int i=0; i < sendQueue.count; i++){
+            //[[sendQueue objectAtIndex:i] getValue:&p];
+            
+            //message 已经被释放了么？
+            //NSLog(@"message count %d", [p.msg retainCount]);
+            
+            [p.msg release];
+        }
+         */
+    }
+    
+    
+    NSLog(@"clear send Queue");
+    @synchronized(self) {
+        [sendQueue release];
+        sendQueue = nil;
+    }
+    NSLog(@"close Send thread");
+    
+    NSLog([NSString stringWithFormat:@"error state %d", sendOver]);
+    
+    //@synchronized(self) {
     [pool release];
-    [self release];
+    
+    //用户退出聊天室 则自己清理 自己
+    //发送中网络断开 仍在聊天室中 则 设置sendOver状态 通知上层释放
+    @synchronized(self) {
+        if (sendOver) {
+            [self release];
+            //sender = NULL;
+        }else {
+            sendOver = true;
+        }
+    }
+        //[self release];
+    //}
 }
 
+
 //将消息压入到缓冲区中
--(bool)sendMsg:(const char *)msg m:(int)mid{
-    NSLog(@"sendMessage why connect yet?");
-    @synchronized(sendQueue){
-        [sendQueue addObject:[NSString stringWithUTF8String:msg ]];
+-(bool)sendMsg:(const char *)msg m:(int)mid mi:(int) msgId{
+    //没有连接直接返回 失败即可 不用压入后续的message了
+    //连接已经断开了 释放对象 重新连接
+    if (sendOver) {
+        NSLog(@"can't send message");
+        //重新连接 准备发送消息
+        startSendRedis(subchannelId);
+        return false;
     }
+    
+    if (redis == nil ) {
+        NSLog(@"send lost connection so return false");
+        return false;
+    }
+    
+    
+    NSLog(@"sendMessage why connect yet?");
+    
+    //正在发送 设置状态
+    //1 成功了
+    @synchronized(self) {
+        Logic::getInstance()->setMsgState(msgId, 1);
+    }
+    
+    
+    //1 成功
+    //2 失败
+    //struct MsgObj obj;
+    //obj.msgId = msgId;
+    //obj.msg = [NSString stringWithUTF8String:msg ];
+    //[obj.msg retain];
+    
+    //不应该加入到 autorelease池子中的
+    //obj.msg = [[NSString alloc] initWithUTF8String:msg];
+    
+    if (sendQueue != nil) {
+        @synchronized(self){
+            if (sendQueue != nil) {
+                //[sendQueue addObject:[NSValue value:&obj withObjCType:@encode(struct MsgObj) ]];
+                NSString *nmsg = [[NSString alloc] initWithUTF8String:msg];
+                [sendQueue addObject:nmsg];
+                [nmsg release];
+                
+            }
+
+        }
+    }else {
+        //[obj.msg release];
+    }
+    
     return true;
 }
 

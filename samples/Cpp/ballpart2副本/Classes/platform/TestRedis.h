@@ -57,7 +57,7 @@
 -(void) redisSendText:(const char *)text;
 -(void) tryConnect;
 
--(bool) sendMsg:(const char*)msg m:(int)mid;
+-(bool) sendMsg:(const char*)msg m:(int)mid mi:(int)msgId;
 -(bool) getLTime:(long long *)lt;
 
 -(void) closeSendRedis;

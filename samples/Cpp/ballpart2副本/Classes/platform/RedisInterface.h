@@ -53,7 +53,7 @@ int getVoiceLength(const char *);
 char *encodeVoiceC(const char *fn);
 
 
-bool sendMsgC(const char*, int mid);
+bool sendMsgC(const char*, int mid, int msgId);
 
 bool getLostTime(long long *lostTime);
 
@@ -62,6 +62,7 @@ void reconnectRedis();
 
 //void closeSendRedisC();
 
-
 void testUtf8C(const char*);
+int getMsgState(int msgId);
+
 #endif

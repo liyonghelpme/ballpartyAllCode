@@ -105,8 +105,16 @@
     if (context->err != 0) {
         return NO;
     } else {
+    	//设置 read write的超时时间
+        //redisSetTimeout(context, tv);
 		return YES;
 	}
+}
+-(void) setTimeout{
+    struct timeval tv;
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    redisSetTimeout(context, tv);
 }
 
 - (BOOL)connected

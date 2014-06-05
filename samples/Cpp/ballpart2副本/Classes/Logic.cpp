@@ -56,6 +56,8 @@ initMatchYet(false)
 , gender(0)
 , lookOther(false)
 , initUserDataYet(false)
+, msgId(0)
+, inChatRoom(false)
 
 {
     srand(time(NULL));

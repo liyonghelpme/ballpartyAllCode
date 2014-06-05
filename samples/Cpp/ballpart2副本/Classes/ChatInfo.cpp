@@ -183,9 +183,12 @@ void ChatInfo::onPeople(cocos2d::CCObject *obj, TouchEventType tt){
     switch (tt) {
         case cocos2d::ui::TOUCH_EVENT_ENDED:
         {
-            Logic::getInstance()->setLookOther(true);
-            Logic::getInstance()->otherId = ((CCNode*)obj)->getTag();
-            CCDirector::sharedDirector()->pushScene(getTransScene(ConfigView::scene()));
+            if (CCDirector::sharedDirector()->getNextScene() == NULL) {
+                Logic::getInstance()->setLookOther(true);
+                Logic::getInstance()->otherId = ((CCNode*)obj)->getTag();
+                CCDirector::sharedDirector()->pushScene(getTransScene(ConfigView::scene()));
+            }
+            
         }
             break;
             

@@ -29,7 +29,13 @@ bool ConfigView::init(){
     {
         return false;
     }
+    //初次进入 获取 其它用户或者自己的 信息
     isOtherUser = Logic::getInstance()->getLookOther();
+    if (isOtherUser) {
+        Logic::getInstance()->fetchInfoState = 0;
+    }
+    
+    
     
     getYet = false;
     
@@ -46,6 +52,9 @@ bool ConfigView::init(){
     w = GUIReader::shareReader()->widgetFromJsonFile("gui/ballUI_7_0.json");
     lay->addWidget(w);
     w->setSize(size);
+    Button *head = static_cast<Button*>(UIHelper::seekWidgetByName(w, "head"));
+    head->setVisible(false);
+    
 
     Button *back = static_cast<Button*>(UIHelper::seekWidgetByName(w, "back"));
     back->addTouchEventListener(this, toucheventselector(ConfigView::onBack));
@@ -57,16 +66,39 @@ bool ConfigView::init(){
     }
     
     
+    
+    if (isOtherUser) {
+        TextField *team = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "team"));
+        team->setTouchEnabled(false);
+        team->setVisible(false);
+        
+        Label *tuijian = static_cast<Label*>(UIHelper::seekWidgetByName(w, "Label_22_0_1_2"));
+        tuijian->setEnabled(false);
+        
+        ImageView *div = static_cast<ImageView*>(UIHelper::seekWidgetByName(w, "div_0_1_2"));
+        div->setEnabled(false);
+    }
+    
+    if (isOtherUser) {
+        TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
+        nn->setTouchEnabled(false);
+        
+        Label *nicheng = static_cast<Label*>(UIHelper::seekWidgetByName(w, "Label_22_0_1"));
+        nicheng->setText("推荐人");
+        
+        TextField *account = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "account"));
+        account->setTouchEnabled(false);
+        
+    }
+    
+    
     scheduleUpdate();
     return true;
 }
 
 void ConfigView::initView() {
     CCLog("init View");
-    Button *head = static_cast<Button*>(UIHelper::seekWidgetByName(w, "head"));
-    char buf[512];
-    sprintf(buf, "flags/%d.png", Logic::getInstance()->getFlagId());
-    head->loadTextureNormal(buf);
+    
     //adjustScale(head, 70, 70);
     User *user;
     if (isOtherUser) {
@@ -77,21 +109,58 @@ void ConfigView::initView() {
         user = us->getUser();
     }
     
-    TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
-    nn->setTouchEnabled(false);
-    nn->setText(user->realName);
+    Button *head = static_cast<Button*>(UIHelper::seekWidgetByName(w, "head"));
+    head->setVisible(true);
     
-    TextField *account = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "account"));
-    account->setTouchEnabled(false);
+    char buf[512];
+    sprintf(buf, "flags/%d.png", user->flagId);
+    head->loadTextureNormal(buf);
     
-    account->setText(user->phoneNumber);
+    if (isOtherUser) {
+        TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
+        nn->setTouchEnabled(false);
+        nn->setText(user->realName);
+        
+        Label *nicheng = static_cast<Label*>(UIHelper::seekWidgetByName(w, "Label_22_0_1"));
+        nicheng->setText("推荐人");
+        
+        TextField *account = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "account"));
+        account->setTouchEnabled(false);
+        account->setText(user->referrer_nick);
+        
+    } else {
+        TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
+        nn->setTouchEnabled(false);
+        nn->setText(user->realName);
+        
+        TextField *account = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "account"));
+        account->setTouchEnabled(false);
+        account->setText(user->phoneNumber);
+        if (isOtherUser) {
+            account->setVisible(false);
+        }
+    }
     
-    TextField *team = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "team"));
-    team->setTouchEnabled(false);
-    team->setText(user->referrer_nick);
-//=======
-//    team->setText(Logic::getInstance()->getReferrer());
-//>>>>>>> .r36322
+    
+    
+    //推荐人昵称
+    if (isOtherUser) {
+        TextField *team = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "team"));
+        team->setTouchEnabled(false);
+        team->setText(user->referrer_nick);
+        team->setVisible(false);
+        
+        Label *tuijian = static_cast<Label*>(UIHelper::seekWidgetByName(w, "Label_22_0_1_2"));
+        tuijian->setEnabled(false);
+    
+        ImageView *div = static_cast<ImageView*>(UIHelper::seekWidgetByName(w, "div_0_1_2"));
+        div->setEnabled(false);
+        
+    }else {
+        TextField *team = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "team"));
+        team->setTouchEnabled(false);
+        team->setText(user->referrer_nick);
+    }
     
     
     TextField *gender = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "gender"));
@@ -176,6 +245,8 @@ void ConfigView::onQuit(cocos2d::CCObject *obj, TouchEventType tt){
 
 void ConfigView::update(float dt){
     if (!getYet) {
+        CCLog("is Other User %d %d", isOtherUser, Logic::getInstance()->fetchInfoState);
+        
         //getYet = true;
         if (isOtherUser) {
             if (Logic::getInstance()->fetchInfoState == 0) {

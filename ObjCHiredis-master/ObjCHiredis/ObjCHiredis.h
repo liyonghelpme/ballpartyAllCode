@@ -48,7 +48,8 @@
 
 - (NSArray*)getReply;
 - (BOOL)timesOut;
-
+//只对 发送设置超时  接收没有
+-(void) setTimeout;
 - (void)close;
 
 @end

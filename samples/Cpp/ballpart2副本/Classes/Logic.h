@@ -179,8 +179,32 @@ public:
     bool initUserDataYet;
     void clearState();
     
+    int getMsgId() {
+        return msgId++;
+    }
+    
+    void setMsgState(int msgId, int state) {
+        msgState[msgId] = state;
+    }
+    
+    int getMsgState(int msgId){
+        if(msgState.count(msgId) > 0)
+            return msgState[msgId];
+        return -1;
+    }
+    void clearMsg() {
+        msgState.clear();
+    }
+    bool inChatRoom;
+    
 private:
+    //需要加锁 处理这个数据
+    map<int, int> msgState;
+    
+    
     bool lookOther;
+    int msgId;
+    
     
     
     void fetchOver(bool isSuc, string s, void *param);
