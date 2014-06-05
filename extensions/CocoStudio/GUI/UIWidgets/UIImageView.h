@@ -64,6 +64,8 @@ public:
      */
     void loadTexture(const char* fileName,TextureResType texType = UI_TEX_TYPE_LOCAL);
     
+    void loadTex(CCTexture2D *tex);
+    
     /**
      * Updates the texture rect of the ImageView in points.
      * It will call setTextureRect:rotated:untrimmedSize with rotated = NO, and utrimmedSize = rect.size.
@@ -107,6 +109,7 @@ public:
     std::string getFileName() {
         return _textureFile;
     }
+    CCTexture2D *getTexture();
 protected:
     virtual void initRenderer();
     virtual void onSizeChanged();

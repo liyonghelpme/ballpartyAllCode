@@ -28,6 +28,19 @@ MatchService::MatchService(string url)
    // d = new rapidjson::Document();
     CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(MatchService::onUpdate), this, 1, false);
 }
+void MatchService::clearState(){
+    CCLog("clear Match Service");
+    m_requestYet = false;
+    m_testNum = 0;
+    m_searchYet = false;
+    m_initMatchYet = false;
+    noOld = false;
+    noNew = false;
+    netError = false;
+    updateTime = 0;
+    m_matchList.clear();
+}
+
 //1分钟冷却一下 这样可以 获取 新添加的数据
 void MatchService::onUpdate(float dt) {
     if (noNew || noOld) {

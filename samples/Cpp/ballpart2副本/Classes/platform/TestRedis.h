@@ -33,6 +33,10 @@
     
     
     bool sendOver;
+    
+    
+    bool initConnectYet;
+    
 }
 -(void) reconnect;
 -(void) stopReceiver;

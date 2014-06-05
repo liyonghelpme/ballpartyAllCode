@@ -541,6 +541,10 @@ void Logic::clearState() {
     initUserDataYet = false;
     curInScene = NULL;
     fetchInfoState = 0;
+    
+    MatchService *ms = (MatchService*)ServiceCenter::getInstance()->getService(ServiceCenter::MATCH_SERVICE);
+    ms->clearState();
+    
 }
 
 

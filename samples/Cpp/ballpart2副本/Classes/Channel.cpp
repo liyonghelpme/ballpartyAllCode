@@ -180,10 +180,12 @@ bool Channel::sendMessage(string content, int contentType, int msgId) {
         return true;
     }else {
         bool res =  sendMsgC(doc.c_str(), cid, msgId);
-        if (!res) {
+        if (!res && contentType != QUIT_TYPE) {
+            
             CCNotificationCenter::sharedNotificationCenter()->postNotification("netError");
             CCLog("频道发送 消息出错");
         }
+        
         delete message;
         return res;
     }

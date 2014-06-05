@@ -22,15 +22,22 @@
 
 
 float textMargin = 35;
+float S_TEXT_MARGIN = 25;
+
+
 float imgWidthMargin = 40;
 float imgHeightMargin = 25;
 
 float FONT_SIZE = 30;
 float INPUT_SIZE = 30;
 
+float S_FONT = 25;
+
 float HEAD_SIZE = 70;
 
 float TEXT_WIDTH = 395;
+float S_TEXT_WIDTH = 420;
+
 
 
 CCScene *ChatView::scene(int mID){
@@ -142,7 +149,7 @@ void ChatView::onEnter() {
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(ChatView::onFinishPlay), "finishPlay", NULL);
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(ChatView::onPauseGame), "pauseGame", NULL);
     CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(ChatView::onResumeGame), "resumeGame", NULL);
-    
+    needScroll = 1;
     
     if (initYet) {
         return;
@@ -197,6 +204,12 @@ void ChatView::onEnter() {
         testLabel->setFontSize(FONT_SIZE);
         lab->setFontSize(FONT_SIZE);
         lab2->setFontSize(FONT_SIZE);
+    
+    if (fabs(fs.height-960) < 1) {
+        lab->setFontSize(S_FONT);
+        lab2->setFontSize(S_FONT);
+    }
+    
         CCLog("itouch 4 set font size");
     //}
     
@@ -969,10 +982,16 @@ void ChatView::stopRecordAndSend() {
 
 void ChatView::onSpeak(cocos2d::CCObject *obj, TouchEventType tt){
     CCLog("onSpeak event %d", tt);
+    //尚未初始化建立 发送连接 不能点击 发送
+    if (sender == NULL) {
+        return;
+    }
     
     switch (tt) {
         case cocos2d::ui::TOUCH_EVENT_BEGAN:
         {
+            
+            
             recordTime = 0;
             isRecording = true;
             
@@ -1000,24 +1019,30 @@ void ChatView::onSpeak(cocos2d::CCObject *obj, TouchEventType tt){
             break;
         case cocos2d::ui::TOUCH_EVENT_MOVED:
         {
-            //移动出屏幕空间的时候
-            Button *but = (Button*)obj;
-            bool inT = but->isFocused();
-            if (!inT) {
-                inImage->setEnabled(false);
-                cancelImg->setEnabled(true);
-                cancelImg->setVisible(true);
-            }else {
-                inImage->setEnabled(true);
-                cancelImg->setEnabled(false);
+            if (isRecording) {
+                //移动出屏幕空间的时候
+                Button *but = (Button*)obj;
+                bool inT = but->isFocused();
+                if (!inT) {
+                    inImage->setEnabled(false);
+                    cancelImg->setEnabled(true);
+                    cancelImg->setVisible(true);
+                }else {
+                    inImage->setEnabled(true);
+                    cancelImg->setEnabled(false);
+                }
             }
+            
             
         }
             break;
         case cocos2d::ui::TOUCH_EVENT_ENDED:
         {
-            //isRecord = false;
-            stopRecordAndSend();
+            if (isRecording) {
+                //isRecord = false;
+                stopRecordAndSend();
+            }
+            
         }
             break;
         case cocos2d::ui::TOUCH_EVENT_CANCELED:
@@ -1105,6 +1130,12 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             break;
         case cocos2d::ui::TOUCH_EVENT_ENDED:
         {
+            //尚未初始化建立 发送连接 不能点击 发送
+            if (sender == NULL) {
+                return;
+            }
+            
+            
             std::string text = tf->getStringValue();
             //统计字符数量
             CCLog("send Msg %d", text.length());
@@ -1160,6 +1191,7 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             ImageView *head2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head2"));
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
             //高度至少大于70 才没有明显的缺口 背景框
+            
             chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
             
             CCSize cbsize = chatBack->getSize();
@@ -1331,6 +1363,9 @@ void ChatView::onMsg(bool isSuc, std::string s, void *param) {
 float ChatView::getLabelWidth() {
     CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
     //float lwid = fs.width-114-90;
+    if (fabs(fs.height-960)<1) {
+        return S_TEXT_WIDTH;
+    }
     return TEXT_WIDTH;
     
     //return lwid;
@@ -1960,7 +1995,12 @@ void ChatView::onImgBnt(cocos2d::CCObject *but, TouchEventType tt) {
         {
             Button *b = (Button*)but;
             ImageView *im = (ImageView*)b->getUserData();
-            bigImg->loadTexture(im->getFileName().c_str(), UI_TEX_TYPE_LOCAL);
+            //点击显示当前图片的 ID
+            
+            //bigImg->loadTexture(im->getFileName().c_str(), UI_TEX_TYPE_LOCAL);
+            bigImg->loadTex(im->getTexture());
+            
+            
             CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
             adjustScale(bigImg, fs.width-50, fs.height-50);
             im->setEnabled(true);
@@ -2114,10 +2154,26 @@ void ChatView::trySendMsg(string &con, Channel::MESSAGE_TYPE mt, ImageView *erro
     CCSize sz = lv->getSize();
     CCLog("trySendMsg in size out size %f %f %f %f", insz.width, insz.height, sz.width, sz.height);
     CCLog("inner pos %f %f", lv->getInnerContainer()->getPosition().x, lv->getInnerContainer()->getPosition().y);
+
+    
+    
+    if (lv->getItems()->count() > 20) {
+        lv->removeItem(0);
+        //释放纹理存储空间
+        CCTextureCache::sharedTextureCache()->purgeSharedTextureCache();
+    }
+    
 }
 void ChatView::sendImg(){
     //打开过图片选择 并且 确认 获取图片 数据了
     if (selectImgYet && checkGetYet()) {
+        //尚未初始化建立 发送连接 不能点击 发送
+        if (sender == NULL) {
+            return;
+        }
+        
+        
+        
         selectImgYet = false;
         int len;
         void *data = getImage(&len);
@@ -2305,6 +2361,10 @@ void ChatView::update(float diff){
 }
 
 void ChatView::pinyinMove(){
+    if (!isRunning()) {
+        return;
+    }
+    
     bottom->stopAllActions();
     bottom->runAction(CCMoveTo::create(0.2, ccp(0, ksize.height)));
     

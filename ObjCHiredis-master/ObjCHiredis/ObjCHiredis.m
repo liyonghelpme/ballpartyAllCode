@@ -143,6 +143,7 @@
 	redisReply *reply = redisCommand(context,[command UTF8String]);
     //发送命令 接收 服务器关闭了 或者连接断开了
     if (reply == nil) {
+        NSLog(@"send command fail");
         return nil;
     }
 	id retVal = [self parseReply:reply];

@@ -28,8 +28,16 @@ public:
     CREATE_FUNC(WorldCup);
     
     ~WorldCup();
+    virtual void onEnter();
+    virtual void onExit();
     
 private:
+    void updatePos();
+    
+    int needScroll;
+    float percentY;
+    
+    
     Button *chatButton;
     
     void refreshMatchState(Layout *, int itemId);

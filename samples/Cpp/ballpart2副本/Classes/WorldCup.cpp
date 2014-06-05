@@ -61,6 +61,8 @@ static char *teamName[] = {
 //旗帜尺寸
 float flagSize = 45;
 const char *emptyName = "gui/empty.png";
+int waitScrollTime = 5;
+
 
 int getTeamId(string tn) {
     for (int i = 0 ; i < 32; i++) {
@@ -90,11 +92,28 @@ WorldCup::~WorldCup(){
     dict->release();
 }
 
+void WorldCup::onEnter() {
+    CCLayer::onEnter();
+    needScroll = 1;
+}
+
+void WorldCup::onExit() {
+    CCPoint pos = lv->getInnerContainer()->getPosition();
+    float minY = lv->getSize().height-lv->getInnerContainerSize().height;
+    float h = -minY;
+    percentY = (pos.y-minY)/h*100;
+    
+    CCLayer::onExit();
+}
 bool WorldCup::init(){
     if ( !CCLayer::init() )
     {
         return false;
     }
+    needScroll = 0;
+    percentY = 0;
+    
+    
     lastUpdateTime = 0;
     waitBasicTime = 0;
     
@@ -401,6 +420,8 @@ void WorldCup::refreshOnlineNum(float diff){
     //return;
     
     if (!inRefresh) {
+        //CCLog("refresh online nUm");
+        
         lastRefreshTime = lastRefreshTime-diff;
         if (lastRefreshTime <= 0 ) {
             //inRefresh = true;
@@ -414,14 +435,19 @@ void WorldCup::refreshOnlineNum(float diff){
             vector<Match*> &allMatch = match->getAllMatch();
             
             //初始化比赛信息结束 之后 才可以 刷新比赛的 在线人数信息
-            if (allMatch.size() > 0) {
+            //CCLog("lastRefreshTime %f %d", lastRefreshTime, allMatch.size());
             
+            if (allMatch.size() > 0) {
+                CCLog("lastUpdateIndex %d", lastUpdateIndex);
+                
                 if (lastUpdateIndex < allMatch.size()) {
-                    inRefresh = true;
+                    
                     //请求的
                     Match *mat = allMatch[lastUpdateIndex++];
+                    //CCLog("match state")
                     //正在比赛中 才更新人数
                     if (mat->state == 1) {
+                        inRefresh = true;
                         int mid = mat->mid;
                         //char buf[128];
                         //sprintf(buf, "%d", mid);
@@ -434,18 +460,22 @@ void WorldCup::refreshOnlineNum(float diff){
                         //hm->addRequest("getUserCount", "GET", postData, this, MYHTTP_SEL(WorldCup::onRefresh), cid);
                         
                         
+                        
+                        CCLog("get user number %d", *cid);
+                        
                         char buf[128];
                         sprintf(buf, "match/%d/user/0", *cid);
                         hm->addRequest(buf, "GET", postData, this, MYHTTP_SEL(WorldCup::onRefresh), cid);
+                    }else {
+                        //inRefresh = false;
                     }
-                    
                                    
                 }else {
                     //超过长度 则 处于refresh 状态
                     //inRefresh = true;
                     lastUpdateIndex = 0;
                     //下次更新100s之后
-                    lastRefreshTime = 100;
+                    lastRefreshTime = 20;
                 }
             }
         }
@@ -901,10 +931,25 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
 }
 
 
+void WorldCup::updatePos(){
+    if (needScroll != 0) {
+        needScroll++;
+        if (needScroll == waitScrollTime) {
+            //lv->scrollToBottom(0.1, false);
+            lv->scrollToPercentVertical(percentY, 0.1, false);
+            
+        }else if(needScroll > waitScrollTime) {
+            needScroll = 0;
+        }
+    }
+}
+
+
 //停止更新数据
 void WorldCup::update(float diff){
     refreshOnlineNum(diff);
     updateCompetitionTime(diff);
+    updatePos();
     
     //为显示的时候 首先显示基本页面 数据
     if (!showYet) {

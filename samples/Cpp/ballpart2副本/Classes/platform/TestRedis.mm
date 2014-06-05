@@ -107,12 +107,18 @@ void startReceiveRedis(int cid){
         redis = nil;
         self->connectSuc = false;
         self->subchannelId = -1;
-        self->channelName = [NSString stringWithString:@"match"];
+        //self->channelName = [NSString stringWithString:@"match"];
+        self->channelName = @"match";
         self->lostConnection = false;
         needUpdateHistory = false;
         sendOver = false;
         //sendQueue = [[NSMutableArray alloc] init];
+        sendQueue = nil;
+        chatInfo = nil;
+        
         lostTime = 0;
+        initConnectYet = false;
+        
     }
     
     return self;
@@ -164,8 +170,12 @@ void runSubscribe(void *tc){
     if (redis == nil) {
         return;
     }
+    //底层command 没有retain cmd 对象
     NSString *cmd = [NSString stringWithFormat:@"subscribe %@_%d", self->channelName, self->subchannelId];
+    [cmd retain];
     [redis command:cmd];
+    [cmd release];
+    
     NSLog([NSString stringWithFormat:@"subscribe %d", self->subchannelId]);
 }
 
@@ -235,7 +245,10 @@ bool getLostTime(long long *lt) {
                 needUpdateHistory = true;
                 
                 NSString *cmd = [NSString stringWithFormat:@"subscribe %@_%d", self->channelName, self->subchannelId];
+                [cmd retain];
                 [redis command:cmd];
+                [cmd release];
+                
                 NSLog([NSString stringWithFormat:@"new subscribe %d", self->subchannelId]);
                 
                 //等待上层获取历史消息之后开始 获取立即信息
@@ -501,10 +514,13 @@ char *encodeVoiceC(const char*fn) {
         //int mid = Logic::getInstance()->getCID();
         int mid = 0;
         NSString *cmd = [NSString stringWithFormat:@"publish %@_%d %s", self->channelName, mid, strbuf.GetString()];
+        [cmd retain];
         NSLog(@"send cmd");
         //NSLog(cmd);
         NSLog([NSString stringWithFormat:@"%d cmd %d", (int)rd.size(), (int)cmd.length]);
         id retVal = [redis command:cmd];
+        [cmd release];
+        
         //id retVal = [redis getReply];
         NSLog([NSString stringWithFormat:@"retval %@", retVal]);
         NSLog(@"finish read");
@@ -566,6 +582,7 @@ bool sendMsgC(const char*msg, int mid, int msgId) {
     if (sender != NULL) {
         return [(TestRedis*)sender sendMsg:msg m:mid mi:msgId];
     }
+    CCLog("sender not create yet");
     return false;
 }
 
@@ -663,12 +680,14 @@ int getMsgState(int msgId){
     NSLog(@"run send thread");
     //Warning connect must in thread itself
     
+    //线程尚未启动连接 则 不可以发送消息
     @synchronized(self) {
         sendQueue = [[NSMutableArray alloc] init];
         [self connect];
         
         //设置发送超时 时间
         [self->redis setTimeout];
+        initConnectYet = true;
     }
     
     
@@ -715,6 +734,8 @@ int getMsgState(int msgId){
         if (msg != NULL) {
             NSLog(@"try send message");
             NSString *cmd = [NSString stringWithFormat:@"publish %@_%d %@", self->channelName, self->subchannelId, msg];
+            
+            
             //分配的msg 空间释放掉
             //free(msg);
             [msg release];
@@ -724,7 +745,11 @@ int getMsgState(int msgId){
             id retVal;
             //@synchronized(self) {
             //阻塞性发送不能 加锁 否则 主线程也会被卡住
+            //阻塞保持 命令对象 不被删除
+            [cmd retain];
             retVal = [redis command:cmd];
+            [cmd release];
+            
             //}
             if (retVal == nil) {
                 NSLog(@"send Message error reconnect");
@@ -813,9 +838,12 @@ int getMsgState(int msgId){
         return false;
     }
     
-    if (redis == nil ) {
+    //连接已经建立 并且没有 发送消息则 报告错误
+    if (redis == nil && initConnectYet ) {
         NSLog(@"send lost connection so return false");
         return false;
+    }else {
+        NSLog(@"connection not set yet so message not send out Yet");
     }
     
     
@@ -851,41 +879,14 @@ int getMsgState(int msgId){
         }
     }else {
         //[obj.msg release];
+        NSLog(@"发送队列没有 初始化");
+        return false;
     }
     
     return true;
 }
 
-/*
--(bool)sendMsg:(const char *)msg m:(int)mid{
-    NSLog(@"sendMessage why connect yet?");
-    
-    if (redis == nil) {
-        [self connect];
-    }
-    if (redis == nil) {
-        connectSuc = false;
-        return false;
-    }
-    NSLog(@"sendMsg why error but block ? time out too long?");
-    
-    NSLog([NSString stringWithFormat:@"send Msg is %d", mid]);
-    NSString *cmd = [NSString stringWithFormat:@"publish %@_%d %s", self->channelName, mid, msg];
-    //NSLog(cmd);
-    id retVal = [redis command:cmd];
-    if (retVal == nil) {
-        NSLog(@"send Message error reconnect");
-        [redis dealloc];
-        redis = nil;
-        return false;
-    }
-    
-    NSLog([NSString stringWithFormat:@"retval %@", retVal]);
-    NSLog(@"send Msg suc");
-    
-    return  true;
-}
-*/
+
 
 
 @end

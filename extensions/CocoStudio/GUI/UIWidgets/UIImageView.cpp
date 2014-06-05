@@ -71,7 +71,57 @@ void ImageView::initRenderer()
     _imageRenderer = CCSprite::create();
     CCNode::addChild(_imageRenderer, IMAGE_RENDERER_Z, -1);
 }
-
+CCTexture2D *ImageView::getTexture() {
+    CCSprite* imageRenderer = STATIC_CAST_CCSPRITE;
+    return imageRenderer->getTexture();
+}
+    
+void ImageView::loadTex(cocos2d::CCTexture2D *tex) {
+    switch (_imageTexType)
+    {
+        case UI_TEX_TYPE_LOCAL:
+            if (_scale9Enabled)
+            {
+                extension::CCScale9Sprite* imageRendererScale9 = STATIC_CAST_SCALE9SPRITE;
+                //imageRendererScale9->initWithFile(fileName);
+                
+                imageRendererScale9->setCapInsets(_capInsets);
+            }
+            else
+            {
+                CCSprite* imageRenderer = STATIC_CAST_CCSPRITE;
+                //imageRenderer->initWithFile(fileName);
+                imageRenderer->initWithTexture(tex);
+                
+            }
+            break;
+        case UI_TEX_TYPE_PLIST:
+            if (_scale9Enabled)
+            {
+                extension::CCScale9Sprite* imageRendererScale9 = STATIC_CAST_SCALE9SPRITE;
+                //imageRendererScale9->initWithSpriteFrameName(fileName);
+                
+                imageRendererScale9->setCapInsets(_capInsets);
+            }
+            else
+            {
+                CCSprite* imageRenderer = STATIC_CAST_CCSPRITE;
+                //imageRenderer->initWithSpriteFrameName(fileName);
+                imageRenderer->initWithTexture(tex);
+                
+            }
+            break;
+        default:
+            break;
+    }
+    _imageTextureSize = _imageRenderer->getContentSize();
+    imageTextureScaleChangedWithSize();
+    updateAnchorPoint();
+    updateFlippedX();
+    updateFlippedY();
+    updateRGBAToRenderer(_imageRenderer);
+}
+    
 void ImageView::loadTexture(const char *fileName, TextureResType texType)
 {
     if (!fileName || strcmp(fileName, "") == 0)

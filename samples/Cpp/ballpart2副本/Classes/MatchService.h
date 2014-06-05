@@ -50,6 +50,9 @@ public:
         return netError;
     }
     
+    void clearState();
+    
+    
 private:
     void onUpdate(float);
     
