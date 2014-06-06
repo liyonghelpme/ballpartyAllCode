@@ -173,8 +173,16 @@ bool CCTextFieldTTF::canDetachWithIME()
 
 void CCTextFieldTTF::insertText(const char * text, int len)
 {
+    
+    
     std::string sInsert(text, len);
-
+    CCLog("insertText is %s %d", sInsert.c_str(), sInsert.size());
+    const char *tin = sInsert.c_str();
+    for (int i=0; i < sInsert.size(); i++) {
+        printf("%x ", tin[i]);
+    }
+    printf("\n");
+    
     // insert \n means input end
     int nPos = sInsert.find('\n');
     //找到了 换行符号 输入就是 -1  len = -1

@@ -57,7 +57,7 @@ bool sendMsgC(const char*, int mid, int msgId);
 
 bool getLostTime(long long *lostTime);
 
-void reconnectRedis();
+//void reconnectRedis();
 
 
 //void closeSendRedisC();

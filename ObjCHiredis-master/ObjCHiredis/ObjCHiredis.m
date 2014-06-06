@@ -144,6 +144,8 @@
     //发送命令 接收 服务器关闭了 或者连接断开了
     if (reply == nil) {
         NSLog(@"send command fail");
+        NSLog([NSString stringWithFormat:@"redis error is %s", redisReplyReaderGetError(context) ]);
+        
         return nil;
     }
 	id retVal = [self parseReply:reply];

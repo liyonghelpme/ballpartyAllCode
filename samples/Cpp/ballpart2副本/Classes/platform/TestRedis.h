@@ -44,12 +44,12 @@
 -(void) connect;
 -(void) sendVoice:(const char *)fn;
 -(void) sendImg;
--(char*) encodeVoice:(const char*)fn;
++(char*) encodeVoice:(const char*)fn;
 -(void) setChannel:(int) cid;
 
 -(void)dealloc;
 
-+(id)sharedRedis;
+//+(id)sharedRedis;
 
 //-(void) connectAsync;
 

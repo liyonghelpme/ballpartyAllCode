@@ -1109,22 +1109,28 @@ int redisBufferRead(redisContext *c) {
     int nread;
 
     /* Return early when the context has seen an error. */
-    if (c->err)
+    if (c->err) {
+        printf("redisBufferRead error yet\n");
         return REDIS_ERR;
-
+    }
     nread = read(c->fd,buf,sizeof(buf));
     if (nread == -1) {
         if ((errno == EAGAIN && !(c->flags & REDIS_BLOCK)) || (errno == EINTR)) {
             /* Try again later */
+            printf("EAGAIN error\n");
+            
         } else {
             __redisSetError(c,REDIS_ERR_IO,NULL);
+            printf("nread == -1 error\n");
             return REDIS_ERR;
         }
     } else if (nread == 0) {
         __redisSetError(c,REDIS_ERR_EOF,"Server closed the connection");
+        printf("lost connection \n");
         return REDIS_ERR;
     } else {
         if (redisReaderFeed(c->reader,buf,nread) != REDIS_OK) {
+            printf("reader feed error\n");
             __redisSetError(c,c->reader->err,c->reader->errstr);
             return REDIS_ERR;
         }
@@ -1146,15 +1152,20 @@ int redisBufferWrite(redisContext *c, int *done) {
     int nwritten;
 
     /* Return early when the context has seen an error. */
-    if (c->err)
+    if (c->err) {
+        printf("bufferwriter error yet!\n");
         return REDIS_ERR;
-
+    }
+    
     if (sdslen(c->obuf) > 0) {
         nwritten = write(c->fd,c->obuf,sdslen(c->obuf));
         if (nwritten == -1) {
             if ((errno == EAGAIN && !(c->flags & REDIS_BLOCK)) || (errno == EINTR)) {
                 /* Try again later */
+                printf("nwritten -1\n");
             } else {
+                printf("nwritten -1  IO error\n");
+                
                 __redisSetError(c,REDIS_ERR_IO,NULL);
                 return REDIS_ERR;
             }
@@ -1185,24 +1196,32 @@ int redisGetReply(redisContext *c, void **reply) {
     int wdone = 0;
     void *aux = NULL;
 
+    printf("redis getreply\n");
     /* Try to read pending replies */
-    if (redisGetReplyFromReader(c,&aux) == REDIS_ERR)
+    if (redisGetReplyFromReader(c,&aux) == REDIS_ERR) {
+        printf("GetReplyFromReader Error\n");
         return REDIS_ERR;
-
+    }
     /* For the blocking context, flush output buffer and read reply */
     if (aux == NULL && c->flags & REDIS_BLOCK) {
         /* Write until done */
         do {
-            if (redisBufferWrite(c,&wdone) == REDIS_ERR)
+            if (redisBufferWrite(c,&wdone) == REDIS_ERR) {
+                printf("write buffer error\n");
                 return REDIS_ERR;
+            }
         } while (!wdone);
 
         /* Read until there is a reply */
         do {
-            if (redisBufferRead(c) == REDIS_ERR)
+            if (redisBufferRead(c) == REDIS_ERR) {
+                printf("read buffer 2 error\n");
                 return REDIS_ERR;
-            if (redisGetReplyFromReader(c,&aux) == REDIS_ERR)
+            }
+            if (redisGetReplyFromReader(c,&aux) == REDIS_ERR) {
+                printf("GetReplyFromReader error 2\n");
                 return REDIS_ERR;
+            }
         } while (aux == NULL);
     }
 
@@ -1302,8 +1321,10 @@ static void *__redisBlockForReply(redisContext *c) {
 }
 
 void *redisvCommand(redisContext *c, const char *format, va_list ap) {
-    if (redisvAppendCommand(c,format,ap) != REDIS_OK)
+    if (redisvAppendCommand(c,format,ap) != REDIS_OK) {
+        printf("append command error!!");
         return NULL;
+    }
     return __redisBlockForReply(c);
 }
 

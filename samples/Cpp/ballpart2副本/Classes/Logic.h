@@ -195,7 +195,7 @@ public:
     void clearMsg() {
         msgState.clear();
     }
-    bool inChatRoom;
+    //bool inChatRoom;
     
 private:
     //需要加锁 处理这个数据

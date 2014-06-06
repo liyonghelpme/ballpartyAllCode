@@ -280,6 +280,11 @@ void RegistScene::onEnter(){
     //手机号码确认
     m_vphoneBtn = (UIButton*)setupPhone->getChildByTag(399);
     m_vphoneBtn->addTouchEventListener(this, toucheventselector(RegistScene::vphonePress));
+    
+    
+    //m_vphoneBtn->addTouchEventListener(this, toucheventselector(RegistScene::cfmOkPress));
+    
+    
     //验证码确认
     m_verifyBtn = (UIButton*)setupVerify->getChildByTag(378);
     m_verifyBtn->addTouchEventListener(this, toucheventselector(RegistScene::verifyPress));
@@ -510,6 +515,7 @@ void RegistScene::vphonePress( CCObject *pSender,TouchEventType type )
 //        sprintf(refereeIdItem, "%d", v_refereeId);
 //        UserService* pUserService = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
 //        pUserService->phoneNum(v_phoneNum, refereeIdItem, this, MyHttpResp(&RegistScene::vphoneEnd));
+        
         v_phoneNum = m_phoneNum->getText();
         
         if(v_phoneNum == ""){

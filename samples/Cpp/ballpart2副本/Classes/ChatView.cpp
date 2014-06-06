@@ -30,6 +30,8 @@ float imgHeightMargin = 25;
 
 float FONT_SIZE = 30;
 float INPUT_SIZE = 30;
+float S_INPUT_SIZE = 25;
+
 
 float S_FONT = 25;
 
@@ -38,6 +40,7 @@ float HEAD_SIZE = 70;
 float TEXT_WIDTH = 395;
 float S_TEXT_WIDTH = 420;
 
+float NAME_HEIGHT = 30;
 
 
 CCScene *ChatView::scene(int mID){
@@ -87,9 +90,10 @@ void ChatView::closeRedis() {
     if (closeYet) {
         return;
     }
-    Logic::getInstance()->inChatRoom = false;
+    //Logic::getInstance()->inChatRoom = false;
     
     //等再次进入重新连接接收redis
+    //关闭了 接收线程 无法再次开启为什么？
     startReceiveRedis(-1);
     initReceiveYet = false;
     CCLog("退出场景则关闭redis 连接 closeRedis");
@@ -115,6 +119,7 @@ void ChatView::onExit(){
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "pauseGame");
     CCNotificationCenter::sharedNotificationCenter()->removeObserver(this, "resumeGame");
     tf->closeIME();
+    //退出场景  例如进入聊天讯息 界面则 关闭 接收  线程
     closeRedis();
     CCLayer::onExit();
 }
@@ -141,7 +146,7 @@ void ChatView::onPauseGame(cocos2d::CCObject *obj) {
 //resumeGame 之后 重新连接 redis的socket socket已经失效了 无法写入
 void ChatView::onResumeGame(CCObject* obj) {
     CCLog("resume game");
-    reconnectRedis();
+    //reconnectRedis();
 }
 
 void ChatView::onEnter() {
@@ -206,6 +211,7 @@ void ChatView::onEnter() {
         lab2->setFontSize(FONT_SIZE);
     
     if (fabs(fs.height-960) < 1) {
+        testLabel->setFontSize(S_FONT);
         lab->setFontSize(S_FONT);
         lab2->setFontSize(S_FONT);
     }
@@ -385,7 +391,7 @@ bool ChatView::init(){
     {
         return false;
     }
-    Logic::getInstance()->inChatRoom = true;
+    //Logic::getInstance()->inChatRoom = true;
     
     errorMsg = CCArray::create();
     errorMsg->retain();
@@ -433,8 +439,16 @@ bool ChatView::init(){
     
     setSizeYet = false;
     //设置显示的文本的大小和高度
-    testLabel = CCLabelTTF::create("", "", INPUT_SIZE);
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    
+    float tw = INPUT_SIZE;
+    if (fabs(vs.height-960) < 1) {
+        tw = S_INPUT_SIZE;
+    }
+    
+    testLabel = CCLabelTTF::create("", "", tw);
     testLabel->retain();
+    
     
     chatText = CCLabelTTF::create("", "", INPUT_SIZE);
     chatText->retain();
@@ -538,7 +552,7 @@ void ChatView::closeChat() {
     if (CCDirector::sharedDirector()->getNextScene() != NULL) {
         return;
     }
-    Logic::getInstance()->inChatRoom = false;
+    //Logic::getInstance()->inChatRoom = false;
     
     
     //Logic::getInstance()->clearMsg();
@@ -1748,7 +1762,7 @@ void ChatView::insertMessage(Message *message, int ord) {
         chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
         
         
-        float height = std::max(chatBack->getSize().height, hsz.height)+marginHeight;
+        float height = std::max(chatBack->getSize().height, hsz.height+NAME_HEIGHT)+marginHeight;
         
         
         pan->setEnabled(true);
@@ -2079,6 +2093,7 @@ void ChatView::receiveMsg(){
     //从redis 服务器接收数据
     }else if (state == 2) {
         //只有未初始化过receive 才获取 消息数据  在场景中才执行
+        //重新进入场景 重新初始化 receive 线程
         if (receive == NULL && !initReceiveYet && isRunning()) {
             CCLog("initReceiveYet false initial receive");
             //ChannelService::getInstance()->listenChannel();
@@ -2094,12 +2109,17 @@ void ChatView::receiveMsg(){
             
             
             CCLog("receive %x", receive);
+            CCLog("send %x", sender);
+            
+            
         }else if(receive != NULL){
+            //CCLog("receive is %x", receive);
             
             long long lostTime;
             bool needUpdate = getLostTime(&lostTime);
             //断开连接需要获取历史记录
             if (needUpdate) {
+                CCLog("reconnectGetHistory %lld", lostTime);
                 reconnectGetHistory(lostTime);
                 return;
             }

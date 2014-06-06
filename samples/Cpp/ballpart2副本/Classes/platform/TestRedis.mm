@@ -32,7 +32,6 @@ void startReceiveRedis(int cid){
     if (receive != NULL) {
         //结束进程
         [(TestRedis*)receive stopReceiver];
-        //[receive dealloc];
         receive = NULL;
     }
     //只是关闭一个频道
@@ -59,6 +58,7 @@ void startReceiveRedis(int cid){
 -(void)setChannel:(int)cid{
     subchannelId = cid;
 }
+/*
 +(id)sharedRedis{
     static TestRedis *sh = nil;
     //static dispatch_once_t onceToken;
@@ -72,6 +72,7 @@ void startReceiveRedis(int cid){
     //});
     return sh;
 }
+ */
 
 
 //调用自己的dealloc 方法
@@ -86,6 +87,7 @@ void startReceiveRedis(int cid){
         */
         //over = true;
         
+        NSLog([NSString stringWithFormat:@"release redis %@", redis]);
         [redis release];
         redis = nil;
     }
@@ -170,6 +172,8 @@ void runSubscribe(void *tc){
     if (redis == nil) {
         return;
     }
+    
+    NSLog([NSString stringWithFormat:@"try connect %d", self->subchannelId]);
     //底层command 没有retain cmd 对象
     NSString *cmd = [NSString stringWithFormat:@"subscribe %@_%d", self->channelName, self->subchannelId];
     [cmd retain];
@@ -194,9 +198,10 @@ bool getLostTime(long long *lt) {
 }
 //接收数据的 线程 crash 掉了 重新进入
 -(void)myThreadMainMethod:(id)obj{
-    if (!Logic::getInstance()->inChatRoom) {
-        return;
-    }
+    //if (!Logic::getInstance()->inChatRoom) {
+    //    return;
+    //}
+    
     
     
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -227,7 +232,7 @@ bool getLostTime(long long *lt) {
     //NSLog([NSString stringWithFormat:@"subscribe %d", self->subchannelId]);
     
     [self tryConnect];
-    NSLog(@"start thread");
+    NSLog(@"start receive thread cid");
     NSLog([NSString stringWithFormat:@"%d", subchannelId]);
     
     
@@ -260,11 +265,16 @@ bool getLostTime(long long *lt) {
         NSLog(@"start receive new message");
         //如果不再聊天室则 不用接收消息
         //subscribe的time out 应该不去设定的
+        if (over) {
+            break;
+        }
+        /*
         if (!Logic::getInstance()->inChatRoom) {
             NSLog(@"quit chat room");
             
             break;
         }
+        */
         
         id retVal = [redis getReply];
         //服务器关闭的消息是什么 格式的 retVal不是这样
@@ -292,7 +302,7 @@ bool getLostTime(long long *lt) {
             NSLog(@"error connect");
             //重新连接 尝试连接服务器 接收消息
             if(redis != nil) {
-                [redis dealloc];
+                [redis release];
                 redis = nil;
             }
             if (!lostConnection) {
@@ -316,7 +326,8 @@ bool getLostTime(long long *lt) {
     
     //sleep(5);
     
-    NSLog(@"close receive thread");
+    NSLog([NSString stringWithFormat:@"close receive thread %x", self]);
+    
     NSLog([NSString stringWithFormat:@"%d", subchannelId]);
     
     //线程清理 有问题？
@@ -388,7 +399,10 @@ void *connect(){
     
     NSString *h = [NSString stringWithCString:HttpModel::getInstance()->baseRedisHost.c_str()];
     redis = [ObjCHiredis redis:h on:[NSNumber numberWithInt:6379]];
+    //不需要retain 呀
     [redis retain];
+    
+    
     if (redis == nil) {
         NSLog([NSString stringWithFormat:@"redis connection fail %@", h]);
         self->connectSuc = false;
@@ -414,9 +428,11 @@ void *connect(){
     */
 }
 char *encodeVoiceC(const char*fn) {
-    return [[TestRedis sharedRedis] encodeVoice:fn];
+    //return [[TestRedis sharedRedis] encodeVoice:fn];
+    return [TestRedis encodeVoice:fn];
 }
--(char*)encodeVoice:(const char*)fn{
+
++(char*)encodeVoice:(const char*)fn{
     NSFileManager *fmr = [NSFileManager defaultManager];
     NSData *db = [fmr contentsAtPath:[NSString stringWithFormat:@"%s", fn]];
     //data and length different
@@ -587,16 +603,18 @@ bool sendMsgC(const char*msg, int mid, int msgId) {
 }
 
 
+/*
 //游戏锁屏之后 redis socket 连接 出现问题 需要 重新连接一下  resumeGame
 void reconnectRedis() {
     [[TestRedis sharedRedis] reconnect];
 }
+*/
 
 
 
 -(void)reconnect{
     if (redis != nil) {
-        [redis dealloc];
+        [redis release];
         redis = nil;
     }
 }
@@ -630,7 +648,6 @@ void startSendRedis(int cid) {
         //结束进程
         @synchronized(sender) {
             [(TestRedis*)sender stopSend];
-            //[receive dealloc];
             sender = NULL;
         }
     }
@@ -674,9 +691,9 @@ int getMsgState(int msgId){
 
 -(void)sendThread {
     NSAutoreleasePool *pool;
-    @synchronized(self) {
-        pool = [[NSAutoreleasePool alloc] init];
-    }
+    //@synchronized(self) {
+    pool = [[NSAutoreleasePool alloc] init];
+    //}
     NSLog(@"run send thread");
     //Warning connect must in thread itself
     
@@ -689,21 +706,23 @@ int getMsgState(int msgId){
         [self->redis setTimeout];
         initConnectYet = true;
     }
+    NSLog(@"send connect suc");
     
+    /*
+     @synchronized(self) {
+     [self connect];
+     [self->redis setTimeout];
+     }
+     sleep(5);
+     
+     continue;
+     */
     
-    
+    //测试 连接立即断开如何
     //网络连接断开 上层重新连接 发起请求
     while (!sendOver) {
         if (redis == nil) {
-            /*
-            @synchronized(self) {
-                [self connect];
-                [self->redis setTimeout];
-            }
-            sleep(5);
-            
-            continue;
-             */
+     
             break;
         }
         
@@ -739,10 +758,10 @@ int getMsgState(int msgId){
             //分配的msg 空间释放掉
             //free(msg);
             [msg release];
-            NSLog(@"send commd");
+            NSLog(@"send commding");
             //NSLog(cmd);
             
-            id retVal;
+            id retVal = nil;
             //@synchronized(self) {
             //阻塞性发送不能 加锁 否则 主线程也会被卡住
             //阻塞保持 命令对象 不被删除
@@ -754,7 +773,7 @@ int getMsgState(int msgId){
             if (retVal == nil) {
                 NSLog(@"send Message error reconnect");
                 
-                [redis dealloc];
+                [redis release];
                 redis = nil;
                 //return false;
                 //发送失败
@@ -776,6 +795,8 @@ int getMsgState(int msgId){
             sleep(1);
         }
     }
+    
+    
     
     //等待最后一个消息发送出去 再 退出线程
     //sleep(5);

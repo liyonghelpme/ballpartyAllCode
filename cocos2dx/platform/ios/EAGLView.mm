@@ -129,11 +129,17 @@ static EAGLView *view = 0;
 {
     return [self initWithFrame:frame pixelFormat:format depthFormat:0 preserveBackbuffer:NO sharegroup:nil multiSampling:NO numberOfSamples:0];
 }
+-(UIKeyboardType) keyboardType{
+    return UIKeyboardTypeEmailAddress;
+}
 
 - (id) initWithFrame:(CGRect)frame pixelFormat:(NSString*)format depthFormat:(GLuint)depth preserveBackbuffer:(BOOL)retained sharegroup:(EAGLSharegroup*)sharegroup multiSampling:(BOOL)sampling numberOfSamples:(unsigned int)nSamples;
 {
     if((self = [super initWithFrame:frame]))
     {
+        //限制无法接收 语音输入
+        //keyboardType = UIKeyboardTypeEmailAddress;
+        
         isUseUITextField = YES;
         pixelformat_ = format;
         depthFormat_ = depth;

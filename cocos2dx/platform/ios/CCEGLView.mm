@@ -83,6 +83,8 @@ void CCEGLView::setIMEKeyboardState(bool bOpen)
 {
     if (bOpen)
     {
+        //[EAGLView sharedEGLView].keyboardType = UIKeyboardTypeEmailAddress;
+         
         [[EAGLView sharedEGLView] becomeFirstResponder];
     }
     else

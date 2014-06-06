@@ -57,7 +57,7 @@ initMatchYet(false)
 , lookOther(false)
 , initUserDataYet(false)
 , msgId(0)
-, inChatRoom(false)
+//, inChatRoom(false)
 
 {
     srand(time(NULL));

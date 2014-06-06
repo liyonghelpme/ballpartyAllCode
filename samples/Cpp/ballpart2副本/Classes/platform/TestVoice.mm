@@ -189,7 +189,11 @@ void playVoice(int vid){
     NSURL *outputFileURL = [NSURL fileURLWithPath:saveP];
     NSLog([NSString stringWithFormat:@"out url %@", outputFileURL.path]);
     
+    UInt32 audioOverride = kAudioSessionOverrideAudioRoute_Speaker;
+    AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute, sizeof(audioOverride), &audioOverride);
+    
     player = [[AVAudioPlayer alloc] initWithContentsOfURL:outputFileURL error:nil];
+    
     [player setDelegate:self];
     BOOL res = [player play];
     NSLog([NSString stringWithFormat:@"play ok %d", res]);
