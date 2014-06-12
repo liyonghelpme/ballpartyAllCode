@@ -5,6 +5,7 @@
 #include "JniHelper.h"
 #include "cocoa/CCString.h"
 #include "Java_org_cocos2dx_lib_Cocos2dxHelper.h"
+#include "support/CCNotificationCenter.h"
 
 
 #define  LOG_TAG    "Java_org_cocos2dx_lib_Cocos2dxHelper.cpp"
@@ -26,6 +27,12 @@ extern "C" {
         g_apkPath = JniHelper::jstring2string(apkPath);
     }
 
+    JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxHelper_nativeSendNotification(JNIEnv *env, jobject thiz, jstring msg) {
+        //CCLog("cocos2dx music ");
+        const char *pt = env->GetStringUTFChars(msg, NULL);
+        CCNotificationCenter::sharedNotificationCenter()->postNotification(pt, NULL);
+        env->ReleaseStringUTFChars(msg, pt);
+    }
     JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxHelper_nativeSetEditTextDialogResult(JNIEnv * env, jobject obj, jbyteArray text) {
         jsize  size = env->GetArrayLength(text);
 

@@ -139,6 +139,12 @@ public:
     virtual const ccColor3B& getColorSpaceHolder();
     virtual void setColorSpaceHolder(const ccColor3B& color);
 
+    //类似于 closeIME 实现 关闭相关联的输入法
+    virtual void didDetachWithIME() {
+        CCLog("didDetach WithIME of CCTextFieldTTF");
+        detachWithIME();
+    }
+    
     bool isMultiLine;
     bool shint;
     // input text property

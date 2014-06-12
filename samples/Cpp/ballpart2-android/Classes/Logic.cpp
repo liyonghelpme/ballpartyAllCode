@@ -13,7 +13,6 @@
 #include "stringbuffer.h"
 #include "ServiceCenter.h"
 
-
 bool DEBUG = true;
 float transTime = 0.2;
 float IMG_WIDTH = 200;
@@ -22,14 +21,13 @@ int FEEDBACK = 10000;
 
 CCScene *curInScene = NULL;
 
+int redisPort = 6379;
 
 long long delayTime = 100;
 
 CCScene *getTransScene(CCScene *s)
 {
     return CCTransitionSlideInR::create(transTime, s);
-    
-    //CCUserDefault::sharedUserDefault()->getInte
 }
 
 void adjustScale(CCNode *n, float w, float h) {
@@ -67,10 +65,12 @@ initMatchYet(false)
     uid = rand()%1000;
     //d = new rapidjson::Document();
     flagId = rand()%32+1;
-    
-    
-    
-    //CCFileUtils::sharedFileUtils()->getFileData(<#const char *pszFileName#>, <#const char *pszMode#>, <#unsigned long *pSize#>)
+
+    CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(Logic::onPlayOver), "PLAY_OVER", NULL);
+}
+
+void Logic::onPlayOver() {
+    CCNotificationCenter::sharedNotificationCenter()->postNotification("finishPlay", NULL);
 }
 
 int Logic::getImgId(){

@@ -180,9 +180,18 @@ public:
         return _textFieldRenderer;
     }
     
+    void setInputType(int i){
+        inputType = i;
+    }
+    bool getIsAttach() {
+        return isAttachWithIME;
+    }
     
 private:
+    bool isAttachWithIME;
+    
     bool shint;
+    int inputType;
     
 protected:
     

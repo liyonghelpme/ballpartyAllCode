@@ -641,6 +641,10 @@ public:
     /*temp action*/
     void setActionTag(int tag);
 	int getActionTag();
+
+    void setCloseIME(bool b){
+        closeIME = b;
+    }
 protected:
     //call back function called when size changed.
     virtual void onSizeChanged();
@@ -678,6 +682,9 @@ protected:
     virtual void copyClonedWidgetChildren(Widget* model);
     Widget* getWidgetParent();
 protected:
+    bool closeIME;
+
+
     bool _enabled;            ///< Highest control of widget
     bool _bright;             ///< is this widget bright
     bool _touchEnabled;       ///< is this widget touch endabled

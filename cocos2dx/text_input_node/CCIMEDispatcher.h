@@ -77,6 +77,8 @@ public:
     void dispatchKeyboardWillHide(CCIMEKeyboardNotificationInfo& info);
     void dispatchKeyboardDidHide(CCIMEKeyboardNotificationInfo& info);
 
+    void closeIME();
+    
 protected:
     friend class CCIMEDelegate;
 

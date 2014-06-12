@@ -23,6 +23,8 @@ THE SOFTWARE.
 ****************************************************************************/
 
 #include "CCIMEDispatcher.h"
+#include "platform/CCCommon.h"
+
 
 #include <list>
 
@@ -126,6 +128,24 @@ void CCIMEDispatcher::addDelegate(CCIMEDelegate* pDelegate)
         return;
     }
     m_pImpl->m_DelegateList.push_front(pDelegate);
+}
+
+void CCIMEDispatcher::closeIME() {
+    //存在连接 键盘的输入框
+    CCLog("try to close IME Widget");
+    if (m_pImpl->m_DelegateWithIme)
+    {
+        if (!m_pImpl->m_DelegateWithIme->canDetachWithIME())
+        {
+            CCLog("无法关闭 旧的输入框");
+        }else {
+            CCLog("关闭输入法成功");
+            CCIMEDelegate * pOldDelegate = m_pImpl->m_DelegateWithIme;
+            //m_pImpl->m_DelegateWithIme = 0;
+            pOldDelegate->didDetachWithIME();
+        }
+        
+    }
 }
 
 bool CCIMEDispatcher::attachDelegateWithIME(CCIMEDelegate * pDelegate)

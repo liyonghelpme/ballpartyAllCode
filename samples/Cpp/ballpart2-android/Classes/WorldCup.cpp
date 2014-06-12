@@ -337,7 +337,7 @@ void WorldCup::onFri(cocos2d::CCObject *obj, TouchEventType tt){
             break;
         case cocos2d::ui::TOUCH_EVENT_ENDED:
         {
-            CCDirector::sharedDirector()->pushScene(FriendView::scene());
+            //CCDirector::sharedDirector()->pushScene(FriendView::scene());
         }
             break;
         case cocos2d::ui::TOUCH_EVENT_CANCELED:

@@ -131,7 +131,8 @@ void ChatView::onPauseGame(cocos2d::CCObject *obj) {
     playVoice(-1);
     
     //直接退出房间即可
-    closeChat();
+    //TODO:: android 不用退出房间  ios 也不用了
+    //closeChat();
     
     
     //退出游戏的时候 清理一下 接收线程对象 然后 再进入的时候 恢复一下即可 lostConnection的时间自己记录一下
@@ -1014,6 +1015,8 @@ void ChatView::onSpeak(cocos2d::CCObject *obj, TouchEventType tt){
             
             playVoice(-1);
             startRecord();
+            CCLog("chatView startRecord finish");
+
             speak->setTitleText("松开结束");
             inRecord->setEnabled(true);
             inImage->setEnabled(true);
@@ -2083,6 +2086,7 @@ void ChatView::reconnectGetHistory( long long lostTime) {
 void ChatView::receiveMsg(){
     //接收该频道的消息
     if (state == 0) {
+        /*
         state = 1;
         //等待频道初始化历史消息结束
         //缓存频道消息
@@ -2093,6 +2097,10 @@ void ChatView::receiveMsg(){
         MessageService *ms = (MessageService*)ServiceCenter::getInstance()->getService(ServiceCenter::MESSAGE_SERVICE);
         ms->getHistoryMessage(m_channel->cid, this, MYHTTP_SEL(ChatView::onMsg), true);
         
+        */
+
+        state = 2;
+
         
     //从redis 服务器接收数据
     }else if (state == 2) {
@@ -2339,11 +2347,25 @@ void ChatView::checkError() {
     }
 }
 
+//检查键盘如果在移动则 移动屏幕
+void ChatView::checkKeyBoard(){
+    bool km = CCUserDefault::sharedUserDefault()->getBoolForKey("keyboardMove");
+    if(km) {
+
+        CCUserDefault::sharedUserDefault()->setBoolForKey("keyboardMove", false);
+        int kheight = CCUserDefault::sharedUserDefault()->getIntegerForKey("keyboardHeight");
+        ksize.height = kheight;
+        pinyinMove();
+    }
+}
+
 
 void ChatView::update(float diff){
     updateMidSize(diff);
     updateRecordTime(diff);
     checkError();
+    checkKeyBoard();
+
     sleepTime -= diff;
     //下一帧才开始 scroll
     //需要等待 listView 调用了 visit sortAllChildren 之后 refreshView 成功 更新了界面 才可以 驱动 scrollToBottom 来执行 这时候 内部容器的size才会变化
@@ -2521,7 +2543,7 @@ void ChatView::onText(cocos2d::CCObject *obj, TextFiledEventType tt) {
             //midView->stopAllActions();
             
             
-            
+            //当关闭键盘的时候则 提示这个
             
             midView->stopAllActions();
             midView->runAction(CCMoveTo::create(0.2, ccp(0, bsz.height)));

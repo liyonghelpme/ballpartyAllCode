@@ -360,7 +360,8 @@ _touchHeight(0.0f),
 _useTouchArea(false),
 _textFieldEventListener(NULL),
 _textFieldEventSelector(NULL),
-_passwordStyleText("")
+_passwordStyleText(""),
+inputType(0)
 {
 }
 
@@ -385,6 +386,8 @@ TextField* TextField::create()
 bool TextField::init()
 {
     shint = false;
+    isAttachWithIME = false;
+    
     if (Widget::init())
     {
         setTouchEnabled(true);
@@ -597,8 +600,11 @@ const char* TextField::getPasswordStyleText()
 
 void TextField::update(float dt)
 {
+    //获取相应的 键盘事件 是否 附着到了键盘上面了
     if (getAttachWithIME())
     {
+        isAttachWithIME = true;
+        
         attachWithIMEEvent();
         if (shint) {
             _hintText->setVisible(true);
@@ -607,8 +613,10 @@ void TextField::update(float dt)
         
         setAttachWithIME(false);
     }
+    
     if (getDetachWithIME())
     {
+        isAttachWithIME = false;
         detachWithIMEEvent();
         _hintText->setVisible(false);
         setDetachWithIME(false);
@@ -648,6 +656,8 @@ bool TextField::getAttachWithIME()
 
 void TextField::setAttachWithIME(bool attach)
 {
+    //设置键盘输入类型 在 android java 中 访问这个 数据 设定键盘类型 
+    CCUserDefault::sharedUserDefault()->setIntegerForKey("inputType", inputType);
     _textFieldRenderer->setAttachWithIME(attach);
 }
 

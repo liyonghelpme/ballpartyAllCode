@@ -12,7 +12,12 @@
 //外网redis服务器
 //string serverRedis = "113.108.228.190";
 
+
 string serverRedis = "ballparty.dozengame.com";
+
+
+//android 模拟器主机 ip
+//string serverRedis = "10.0.3.2";
 
 
 //正式 测试

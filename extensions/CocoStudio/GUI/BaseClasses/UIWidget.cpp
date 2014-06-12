@@ -61,7 +61,8 @@ _nodes(NULL),
 _color(ccWHITE),
 _opacity(255),
 _flippedX(false),
-_flippedY(false)
+_flippedY(false),
+closeIME(false)
 {
     
 }
@@ -267,6 +268,8 @@ void Widget::removeAllChildrenWithCleanup(bool cleanup)
 void Widget::setEnabled(bool enabled)
 {
     _enabled = enabled;
+    
+    
     if(_widgetChildren && _widgetChildren->count() > 0)
     {
         CCObject* child;
@@ -705,11 +708,18 @@ bool Widget::onTouchBegan(CCTouch *touch, CCEvent *unused_event)
         }
     }
     //listView 接收到了点击事件
-    //CCLog("widget is hitted? %d %s", _hitted, getName());
+
+    CCLog("widget is hitted? %d %s", _hitted, getName());
     if (!_hitted)
     {
         return false;
     }
+    //点击到这个对象则 关闭输入框
+    if(closeIME) {
+        CCLog("try to close IME");
+        CCIMEDispatcher::sharedDispatcher()->closeIME();
+    }
+
     setFocused(true);
     Widget* widgetParent = getWidgetParent();
     if (widgetParent)
