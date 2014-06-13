@@ -65,7 +65,8 @@ _normalTextureLoaded(false),
 _pressedTextureLoaded(false),
 _disabledTextureLoaded(false)
 {
-    
+    //点击按钮 关闭 输入框
+    setCloseIME(true);
 }
 
 Button::~Button()
