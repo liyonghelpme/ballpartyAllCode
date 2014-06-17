@@ -60,6 +60,7 @@ bool RegisterView::init() {
     return true;
 }
 
+
 void RegisterView::onBackground(cocos2d::CCObject *obj, TouchEventType tt){
     switch (tt) {
         case cocos2d::ui::TOUCH_EVENT_BEGAN:

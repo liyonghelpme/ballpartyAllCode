@@ -14,7 +14,7 @@
 #include "CoverView.h"
 #include "ServiceCenter.h"
 #include "UserService.h"
-
+#include "CCNative.h"
 
 UIButton* m_registBtn;
 UIButton* m_reffereeBtn;
@@ -141,7 +141,7 @@ bool delSpecialChar(string str)
     string m_str = str;
     //string m_str = "asdf=";
     CCLog("delSpecialChar");
-    //有几个字符与输入法有关；
+    //有几个字符入法有关；
     const char *punc=" ～！@＃¥％……&＊（）——＋＝－｀｜、｝］｛［“‘：；？／》。《，";
     int len=strlen(punc);
     
@@ -201,10 +201,22 @@ bool RegistScene::init(){
     v_password = "";
     v_itrsPhoneNum = "";
     v_userid = 0;
+
+    //CCDirector::sharedDirector()->getKeypadDispatcher()->addDelegate(this);
+
+    setKeypadEnabled(true);
+    
     scheduleUpdate();
 
     return true;
 }
+
+void RegistScene::keyBackClicked() {
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    CCScene* pScene = LoginScene::scene();
+    pDirector->replaceScene(pScene);   
+}
+
 void RegistScene::pinyinMove() {
     if (!isRunning()) {
         return;
@@ -472,8 +484,83 @@ void RegistScene::onEnter(){
     refPhoneNum = (UITextField*)UIHelper::seekWidgetByName(addshow, "refPhoneNum");
     refPhoneNum->setInputType(1);
     refPhoneNum->setTextHorizontalAlignment(kCCTextAlignmentCenter);
+    refPhoneNum->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
+
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+
+    float sca = std::min(vs.width/640, vs.height/960);
+    refPhoneNum->setScale(sca);
+
+    //调整所有的 UI 对象
+    Label *l1 = (Label*)UIHelper::seekWidgetByName(addshow, "label1");
+    l1->setScale(sca);
+
+    Label *l2 = (Label*)UIHelper::seekWidgetByName(addshow, "label2");
+    l2->setScale(sca);
+    m_reffereeBtn->setScale(sca);
 
     UIPanel* setupRefereePanel = (UIPanel*)UIHelper::seekWidgetByName(addshow, "setupRefereePanel");
+    UIPanel* setup2Panel = (UIPanel*)UIHelper::seekWidgetByName(addshow, "setup2Panel");
+    UIPanel* setupPhonePanel = (UIPanel*)UIHelper::seekWidgetByName(addshow, "setupPhonePanel");
+    UIPanel* setupVerifyPanel = (UIPanel*)UIHelper::seekWidgetByName(addshow, "setupVerifyPanel");
+
+    std::vector<Widget *> wids;
+
+    Widget *adjustLayout[] = {
+        setupRefereePanel,
+        setupPhonePanel,
+        setupVerifyPanel,
+        setup2Panel,
+        NULL
+    };
+    for (int i = 0; adjustLayout[i] != NULL; ++i)
+    {
+        UIHelper::seekWidgetByLabel(adjustLayout[i], &wids, "Label");
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+        
+        UIHelper::seekWidgetByLabel(adjustLayout[i], &wids, "Button");
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+
+
+        UIHelper::seekWidgetByLabel(adjustLayout[i], &wids, "TextField");
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            CCSize sp = w->getSize();
+            sp.height = 45;
+            //设定高度保持不变 45 宽度根据屏幕尺寸缩放即可
+            w->setSize(sp);
+            w->setScale(sca);
+        }
+        wids.clear();
+
+        UIHelper::seekWidgetByLabel(adjustLayout[i], &wids, "CheckBox");
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            CCSize sp = w->getSize();
+            sp.height = 45;
+            //设定高度保持不变 45 宽度根据屏幕尺寸缩放即可
+            w->setSize(sp);
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+    
+
+
+    
     //addshow->getChildByTag(305)
     UILabel *bodyPanel = (UILabel*)UIHelper::seekWidgetByName(setupRefereePanel, "bodyPanel");
     bodyPanel->setCloseIME(true);
@@ -504,6 +591,9 @@ void RegistScene::onEnter(){
     verifyCode = (UITextField*)UIHelper::seekWidgetByName(addshow, "verifyCode");
     verifyCode->setInputType(1);
     verifyCode->setTextHorizontalAlignment(kCCTextAlignmentCenter);
+    verifyCode->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
+    //verifyCode->setScale(sca);
+
 
     //verifyCode->setInputType(1);
 
@@ -527,40 +617,21 @@ void RegistScene::onEnter(){
     myPhoneNum = (UITextField*)UIHelper::seekWidgetByName(addshow, "myPhoneNum");
     myPhoneNum->setInputType(1);
     myPhoneNum->setTextHorizontalAlignment(kCCTextAlignmentCenter);
-    
+    myPhoneNum->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
+    //myPhoneNum->setScale(sca);
+
 
 
     //密码
-    /*
-    m_password = CCEditBox::create(CCSize(500,45),CCScale9Sprite::createWithSpriteFrameName("button.png"));
-	m_password->setFontSize(23);
-    m_password->setMaxLength(16);
-	m_password->setAnchorPoint(CCPointZero);
-	m_password->setPlaceHolder("请输入密码");
-	m_password->setInputMode(kEditBoxInputModeAny);
-	m_password->setInputFlag(kEditBoxInputFlagPassword);
-	m_password->setReturnType(kKeyboardReturnTypeDone);
-    m_password->setFontColor(ccc3(80,80,80));
-	m_password->setPosition(ccp(180,663));
-	m_password->setDelegate(this);
-	m_password->setTouchPriority(0);
-    */
+    
 
     password = (UITextField*)UIHelper::seekWidgetByName(rootPerfect, "password");
+    password->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
+    //password->setScale(sca);
 
 
     //确认密码
-//    m_cfmPassWord = CCEditBox::create(CCSize(300,50),CCScale9Sprite::createWithSpriteFrameName("button.png"));
-//	m_cfmPassWord->setFontSize(23);
-//	m_cfmPassWord->setAnchorPoint(CCPointZero);
-//	m_cfmPassWord->setPlaceHolder("请确认密码");
-//	m_cfmPassWord->setInputMode(kEditBoxInputModeAny);
-//	m_cfmPassWord->setInputFlag(kEditBoxInputFlagPassword);
-//	m_cfmPassWord->setReturnType(kKeyboardReturnTypeDone);
-//    m_cfmPassWord->setFontColor(ccc3(80,80,80));
-//	m_cfmPassWord->setPosition(ccp(180,561));
-//	m_cfmPassWord->setDelegate(this);
-//	m_cfmPassWord->setTouchPriority(0);
+
 
      //真实姓名
     /*
@@ -578,8 +649,10 @@ void RegistScene::onEnter(){
     */
 
     nickname = (UITextField*)UIHelper::seekWidgetByName(rootPerfect, "nickName");
+    nickname->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
+    //nickname->setScale(sca);
 
-    
+
     //地区
     /*
     m_areaBox = CCEditBox::create(CCSize(500,45),CCScale9Sprite::createWithSpriteFrameName("button.png"));
@@ -596,7 +669,7 @@ void RegistScene::onEnter(){
     */
 
     area = (UITextField*)UIHelper::seekWidgetByName(rootPerfect, "area");
-    
+    area->setTextVerticalAlignment(kCCVerticalTextAlignmentBottom);
     
     /*** 设置输入框位置 ***/
     //推荐人
@@ -660,6 +733,7 @@ void RegistScene::onEnter(){
     
     showPanel(1);
 
+    //测试 CoverView 不同分辨率的显示 和 位置
     //showPanel(4);
 
     
@@ -768,7 +842,7 @@ void RegistScene::verifyPress( CCObject *pSender,TouchEventType type )
             return;
         }
         
-        //just For Test
+        //just For Test  仅供测试
         //showPanel(4);
 
         
@@ -914,6 +988,7 @@ void RegistScene::provisionPress(CCObject* pSender, TouchEventType type)
 	if (type == TOUCH_EVENT_ENDED)
 	{
         //CCApplication::sharedApplication()->openURL("http://113.108.228.190:91/support/copyright");
+        CCNative::getInstance()->openURL(openU);
         CCLog("provisionPress btn click!");
 	}
 }
@@ -1275,9 +1350,18 @@ void RegistScene::showPanel(int setup){
         }
         */
 
-        coverView = CoverView::create(CCRect((v_width-500)/2,v_height - 960 + 690,500, 400), CCSize(127, 127), 180, 0.25f);
+        float adjustHeight = 101*scale-101;
+
+
+        float phei = 700*scale;
+        if(adjustHeight > 0) {
+            phei += adjustHeight;
+        }
+        float pMid = (v_width-500*scale)/2;
+
+        coverView = CoverView::create(CCRect(pMid, phei, 500, 400*scale), CCSize(127, 127), 180, 0.25f);
         
-        coverView->setPosition((v_width-500*scale)/2, 690*scale);
+        coverView->setPosition(pMid, phei);
         coverView->setScale(scale);
 
         

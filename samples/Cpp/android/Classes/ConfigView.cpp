@@ -23,6 +23,10 @@ CCScene *ConfigView::scene(){
     // return the scene
     return scene;
 }
+void ConfigView::keyBackClicked() {
+    CCDirector::sharedDirector()->popSceneWithTransition(transTime);
+    curInScene = NULL;
+}
 
 bool ConfigView::init(){
     if ( !CCLayer::init() )
@@ -35,7 +39,8 @@ bool ConfigView::init(){
         Logic::getInstance()->fetchInfoState = 0;
     }
     
-    
+    setKeypadEnabled(true);
+
     
     getYet = false;
     
@@ -55,6 +60,32 @@ bool ConfigView::init(){
     Button *head = static_cast<Button*>(UIHelper::seekWidgetByName(w, "head"));
     head->setVisible(false);
     
+
+
+    float sca = std::min(size.width/640, size.height/960);
+    //调整 label 和 按钮的 尺寸 根据 屏幕大小缩放一下
+    std::vector<Widget *> wids;
+    char *kind[] = {
+        "Label",
+        "Button",
+        //"ImageView",
+        "TextField",
+        NULL,
+    };
+
+    for(int i = 0; kind[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(w, &wids, kind[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+    
+
+
+
 
     Button *back = static_cast<Button*>(UIHelper::seekWidgetByName(w, "back"));
     back->addTouchEventListener(this, toucheventselector(ConfigView::onBack));
@@ -82,6 +113,7 @@ bool ConfigView::init(){
     if (isOtherUser) {
         TextField  *nn = static_cast<TextField*>(UIHelper::seekWidgetByName(w, "nickname"));
         nn->setTouchEnabled(false);
+
         
         Label *nicheng = static_cast<Label*>(UIHelper::seekWidgetByName(w, "Label_22_0_1"));
         nicheng->setText("推荐人");

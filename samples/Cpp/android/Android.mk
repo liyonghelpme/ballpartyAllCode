@@ -39,6 +39,7 @@ Classes/platform/RedisImp.cpp \
 Classes/platform/Java_org_cocos2dx_testcpp_MyAudio.cpp \
 Classes/platform/ImgImp.cpp \
 Classes/Loading.cpp \
+Classes/platform/CCNative.cpp \
 
 
 

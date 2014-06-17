@@ -18,13 +18,16 @@ using namespace extension;
 using namespace ui;
 
 
-class RegisterView : public CCLayer {
+class RegisterView : public CCLayer, public CCKeypadDelegate {
 public:
     virtual bool init();
     virtual void update(float);
     static CCScene *scene();
     
     CREATE_FUNC(RegisterView);
+
+    virtual void keyBackClicked();
+    
 private:
     void onReg(CCObject *, TouchEventType);
     void registerOver(bool suc, std::string s, void *param);

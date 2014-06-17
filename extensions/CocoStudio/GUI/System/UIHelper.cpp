@@ -52,6 +52,24 @@ Widget* UIHelper::seekWidgetByTag(Widget* root, int tag)
     return NULL;
 }
 
+//传入 结果收集器 vector对象  Label Button
+std::vector<Widget *> *UIHelper::seekWidgetByLabel(cocos2d::ui::Widget *root, std::vector<Widget*> *wids, const char* wtype) {
+    if (!root) {
+        return wids;
+    }
+    if (strcmp(root->getDescription().c_str(), wtype) == 0) {
+        wids->push_back(root);
+    }
+    ccArray* arrayRootChildren = root->getChildren()->data;
+    int length = arrayRootChildren->num;
+    for (int i=0;i<length;i++)
+    {
+        Widget* child = static_cast<Widget*>(arrayRootChildren->arr[i]);
+        seekWidgetByLabel(child, wids, wtype);
+    }
+    return wids;
+}
+    
 Widget* UIHelper::seekWidgetByName(Widget* root, const char *name)
 {
     if (!root)

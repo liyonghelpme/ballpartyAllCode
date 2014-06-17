@@ -130,6 +130,7 @@ void CCIMEDispatcher::addDelegate(CCIMEDelegate* pDelegate)
     m_pImpl->m_DelegateList.push_front(pDelegate);
 }
 
+//关闭输入法
 void CCIMEDispatcher::closeIME() {
     //存在连接 键盘的输入框
     CCLog("try to close IME Widget");

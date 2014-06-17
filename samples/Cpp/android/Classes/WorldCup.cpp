@@ -59,7 +59,8 @@ static char *teamName[] = {
 };
 
 //旗帜尺寸
-float flagSize = 45;
+const float S_FLAG = 45;
+float flagSize = S_FLAG;
 const char *emptyName = "gui/empty.png";
 int waitScrollTime = 5;
 
@@ -112,7 +113,7 @@ bool WorldCup::init(){
     }
     needScroll = 0;
     percentY = 0;
-    
+
     
     lastUpdateTime = 0;
     waitBasicTime = 0;
@@ -153,6 +154,30 @@ bool WorldCup::init(){
     CCLog("rootSize %f %f", rs.width, rs.height);
     w->setSizeType(SIZE_ABSOLUTE);
     w->setSize(size);
+
+
+    float sca = std::min(size.width/640, size.height/960);
+    flagSize = S_FLAG * sca;
+
+
+    //调整 label 和 按钮的 尺寸 根据 屏幕大小缩放一下
+    std::vector<Widget *> wids;
+    UIHelper::seekWidgetByLabel(w, &wids, "Label");
+    CCLog("widget number %d", wids.size());
+    for(int i = 0; i < wids.size(); i++) {
+        Widget *w = wids[i];
+        w->setScale(sca);
+    }
+    wids.clear();
+    
+    UIHelper::seekWidgetByLabel(w, &wids, "Button");
+    CCLog("widget number %d", wids.size());
+    for(int i = 0; i < wids.size(); i++) {
+        Widget *w = wids[i];
+        w->setScale(sca);
+    }
+    wids.clear();
+
     
     Button *conf = static_cast<Button*>(UIHelper::seekWidgetByName(w, "selfinfo"));
     conf->addTouchEventListener(this, toucheventselector(WorldCup::onConf));
@@ -573,16 +598,19 @@ void WorldCup::initItem(Match &c, float *delay, int *date, int *ord) {
     Button *bnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "chatButton"));
     CCLog("chat button init");
     Button *realBnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "realBnt"));
-    
+    realBnt->setScale(1);
+
     
     //屏幕高度和设计高度的比例 按照比例调整一下item的Y方向高度比例 固定Y高度
     CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    
+    /* android 根据 屏幕缩放item 
     float hc = 960/vs.height;
     CCPoint lsz = ly->getSizePercent();
     lsz.y = lsz.y*hc;
     //缩放高度Y
     ly->setSizePercent(lsz);
-    
+    */
     
     char buf[512];
     int t1 = getTeamId(c.host_name);
@@ -752,24 +780,29 @@ void WorldCup::updateCompetitionTime(float dt) {
         
         CCArray *matches = lv->getItems();
         
-        //MatchService *match = (MatchService*)ServiceCenter::getInstance()->getService(ServiceCenter::MATCH_SERVICE);
+        MatchService *matchSer = (MatchService*)ServiceCenter::getInstance()->getService(ServiceCenter::MATCH_SERVICE);
         //vector<Match*> &allMatch = match->getAllMatch();
+
         for (int i = 0; i < matches->count(); i++) {
             Layout *ly = (Layout*)matches->objectAtIndex(i);
             int tag = ly->getTag();
             if (tag != -1) {
-                CCLog("match id %d", tag);
+                CCLog("match id  %s %d", ly->getName(), tag);
                 
-                Match *c = (Match*)ly->getUserData();
+                //Match *c = (Match*)ly->getUserData();
+                Match *c = matchSer->getMatchById(tag);
+
                 //重新计算比赛状态
                 int curState = c->recaculateState();
                 //替换旧的item 展示新的item
                 if (curState != c->state) {
+                    CCLog("old state new state %d %d %d %d match %x", tag, i, c->state, curState, c);
                     refreshMatchState(ly, i);
                 }
                 
             }
         }
+        CCLog("refresh state over");
     }
 }
 
@@ -788,9 +821,16 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     time_t now;
     time(&now);
     
-    Match *c = (Match*)oldly->getUserData();
+    MatchService *matchSer = (MatchService*)ServiceCenter::getInstance()->getService(ServiceCenter::MATCH_SERVICE);
+    
+    Match *c = matchSer->getMatchById(oldly->getTag());
+
+    //(Match*)oldly->getUserData();
     int curstate = c->recaculateState();
+    CCLog("recaculate state %d %d %x", curstate, c->state, c);
     c->state = curstate;
+
+
     
     
     long long start_time = c->start_time;
@@ -837,15 +877,20 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     
     //屏幕高度和设计高度的比例 按照比例调整一下item的Y方向高度比例 固定Y高度
     CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    
+    /*
     float hc = 960/vs.height;
     CCPoint lsz = ly->getSizePercent();
     lsz.y = lsz.y*hc;
     //缩放高度Y
     ly->setSizePercent(lsz);
+    */
     
-    
+    //标题栏按钮缩放 这个按钮 不要缩放
     Button *realBnt = static_cast<Button*>(UIHelper::seekWidgetByName(ly, "realBnt"));
-    
+    realBnt->setScale(1);
+
+
     char buf[512];
     
     int t1 = getTeamId(c->host_name);
@@ -928,6 +973,8 @@ void WorldCup::refreshMatchState(cocos2d::ui::Layout *oldly, int itemId) {
     lv->insertCustomItem(ly, itemId);
     //旧的id变成 +1
     lv->removeItem(itemId+1);
+
+    CCLog("refresh over insert CustomItem %d", itemId);
 }
 
 

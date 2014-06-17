@@ -26,6 +26,9 @@ public:
     // there's no 'id' in cpp, so we recommend returning the class instance pointer
     static cocos2d::CCScene* scene();
     CREATE_FUNC(ConfigView);
+
+    virtual void keyBackClicked();
+    
 private:
     bool isOtherUser;
     

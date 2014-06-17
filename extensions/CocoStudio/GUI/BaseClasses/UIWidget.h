@@ -81,7 +81,9 @@ typedef void (CCObject::*SEL_TouchEvent)(CCObject*,TouchEventType);
 */
 class Widget : public CCNode
 {
-public:    
+public:
+    //virtual bool isLabel();
+    
     /**
      * Default constructor
      */

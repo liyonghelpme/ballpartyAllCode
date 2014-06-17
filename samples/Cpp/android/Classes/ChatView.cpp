@@ -20,6 +20,29 @@
 #include "MessageService.h"
 #include "ServiceCenter.h"
 
+float getMinScale(){
+    return 1;
+
+    //CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    //return std::min(vs.width/640, vs.height/960);
+
+}
+
+float getShrinkScale() {
+    return 1;
+}
+
+
+float getWidScale() {
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    return vs.width/640;
+}
+
+float getBothScale() {
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    return std::min(vs.width/640, vs.height/960);
+}
+
 
 float textMargin = 35;
 float S_TEXT_MARGIN = 25;
@@ -37,11 +60,15 @@ float S_FONT = 25;
 
 float HEAD_SIZE = 70;
 
-float TEXT_WIDTH = 395;
-float S_TEXT_WIDTH = 420;
+const float STA_WIDTH = 395;
+const float STA_S_WIDTH = 420;
+
+float TEXT_WIDTH = STA_WIDTH;
+float S_TEXT_WIDTH = STA_S_WIDTH;
 
 float NAME_HEIGHT = 30;
 
+float INPUT_WIDTH = 450;
 
 CCScene *ChatView::scene(int mID){
     CCScene *scene = CCScene::create();
@@ -184,14 +211,23 @@ void ChatView::onEnter() {
     overTime = static_cast<Label*>(UIHelper::seekWidgetByName(w, "overTime"));
     overTime->setEnabled(false);
     
+    float sca = std::min(fs.width/640, fs.height/960);
     
     //输入框文本太大了
     tf = static_cast<UITextField*>(UIHelper::seekWidgetByName(w, "word"));
     tf->setMulLine(true);
     tf->setMaxLength(125);
     tf->setFontSize(INPUT_SIZE);
+    tf->setInputType(2);
+    //根据宽度设定scale 比例
+    tf->setScale(getWidScale());
+    //tf->setTextHorizontalAlignment(kCCTextAlignmentLeft);
+
+
     oldPos = tf->getPosition();
-    
+    oldPos.y *= getWidScale();
+    tf->setPosition(oldPos);
+
     
     
     //根据系统判定 字符数量  根据系统高度判定
@@ -201,6 +237,9 @@ void ChatView::onEnter() {
     lab = static_cast<UILabel*>(UIHelper::seekWidgetByName(oneWord, "userDialog"));
     
     
+    Layout *myword = (Layout*)UIHelper::seekWidgetByName(w, "myword");
+    myword->setEnabled(false);
+
     twoWord = static_cast<UIPanel*>(UIHelper::seekWidgetByName(w, "twoWord"));
     lab2 = static_cast<UILabel*>(UIHelper::seekWidgetByName(twoWord, "userDialog2"));
     
@@ -226,10 +265,14 @@ void ChatView::onEnter() {
     //float wh = wordLayer->getSize().height;
     //wordLayer->setSize(CCSizeMake(fs.width, wh));
     
+
     
     bottomBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(bottom, "bottomBack"));
     bbackSize = bottomBack->getSize();
-    
+    bbackSize.height *= sca;
+    //绝对尺寸
+    bottomBack->setSizeType(SIZE_ABSOLUTE);
+    bottomBack->setSize(bbackSize);
     
     
     inputBorder = static_cast<ImageView*>(UIHelper::seekWidgetByName(w, "inputBorder"));
@@ -237,7 +280,7 @@ void ChatView::onEnter() {
     
     CCSize bs = tf->getSize();
     tf->ignoreContentAdaptWithSize(false);
-    float nw = 400*fs.width/640;
+    float nw = INPUT_WIDTH;
     
     
     
@@ -281,12 +324,15 @@ void ChatView::onEnter() {
     
     
     
-    twoWord->setEnabled(false);
+    //twoWord->setEnabled(false);
     
     
     lab2->ignoreContentAdaptWithSize(false);
     head2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(twoWord, "head2"));
+
+
     //voice2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(twoWord, "voice2"));
+
     
     speak = static_cast<Button*>(UIHelper::seekWidgetByName(bottom, "speak"));
     speak->setEnabled(false);
@@ -386,6 +432,9 @@ void ChatView::onScroll(cocos2d::CCObject *obj, ScrollviewEventType st) {
             break;
     }
 }
+void ChatView::keyBackClicked() {
+    closeChat();
+}
 
 bool ChatView::init(){
     if ( !CCLayer::init() )
@@ -393,7 +442,17 @@ bool ChatView::init(){
         return false;
     }
     //Logic::getInstance()->inChatRoom = true;
-    
+    setKeypadEnabled(true);
+
+    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    float nws = vs.width/640;
+    if (nws < 1)
+    {
+        TEXT_WIDTH = STA_WIDTH*nws;
+        S_TEXT_WIDTH = STA_S_WIDTH*nws;
+    }
+
+
     errorMsg = CCArray::create();
     errorMsg->retain();
     
@@ -440,7 +499,7 @@ bool ChatView::init(){
     
     setSizeYet = false;
     //设置显示的文本的大小和高度
-    CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
+    //CCSize vs = CCDirector::sharedDirector()->getVisibleSize();
     
     float tw = INPUT_SIZE;
     if (fabs(vs.height-960) < 1) {
@@ -463,6 +522,73 @@ bool ChatView::init(){
     lay->addWidget(w);
     w->setSize(size);
     
+
+
+
+
+    //调整了 所有的 UI 中得 label button 和 textField 的尺寸大小
+    float sca = std::min(vs.width/640, vs.height/960);
+    //调整 label 和 按钮的 尺寸 根据 屏幕大小缩放一下
+    std::vector<Widget *> wids;
+    char *kind[] = {
+        "Label",
+        "Button",
+        //"ImageView",
+        //"TextField",
+        NULL,
+    };
+
+    Layout *p1 = (Layout*)UIHelper::seekWidgetByName(w, "Panel_1");
+
+    //不用百分比 原因是 百分比会导致 对象扭曲掉 因此采用设定scale的 方案 而不是 size的方案
+    for(int i = 0; kind[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(p1, &wids, kind[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+
+    Layout *p29 = (Layout*)UIHelper::seekWidgetByName(w, "Panel_29");
+
+    char *kind2[] = {
+        "Label",
+        "ImageView",
+        NULL,
+    };
+    for(int i=0; kind2[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(p29, &wids, kind2[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+    Layout *bot = (Layout*)UIHelper::seekWidgetByName(w, "bottom");
+    char *kind3[] = {
+        "Label",
+        "Button",
+        //"TextField",
+        NULL,
+    };
+    for(int i=0; kind3[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(bot, &wids, kind3[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+
+
+
     //CCNotificationCenter::sharedNotificationCenter()->addObserver(this, callfuncO_selector(ChatView::onPauseGame), "pauseGame", NULL);
     
     
@@ -473,12 +599,15 @@ bool ChatView::init(){
     inRecord = static_cast<Layout*>(UIHelper::seekWidgetByName(w, "Panel_40"));
     inRecord->setVisible(true);
     inRecord->setEnabled(false);
+    //inRecord->setScale(getBothScale());
     
     ani = static_cast<ImageView*>(UIHelper::seekWidgetByName(inRecord, "ani"));
+    ani->setScale(getBothScale());
     CCLog("ani name is %s", ani->getName());
     CCAnimation *an;
     an = CCAnimationCache::sharedAnimationCache()->animationByName("speakAni");
     
+
     //ImageView 本身是 Widget 需要其render来绘制动画的
     if(an == NULL) {
         an = CCAnimation::create();
@@ -530,10 +659,15 @@ bool ChatView::init(){
     
     inImage = static_cast<ImageView*>(UIHelper::seekWidgetByName(inRecord, "inRecord"));
     inImage->setEnabled(false);
+    inImage->setScale(getBothScale());
+
     cancelImg = static_cast<ImageView*>(UIHelper::seekWidgetByName(inRecord, "cancel"));
     cancelImg->setEnabled(true);
+    cancelImg->setScale(getBothScale());
+
     bigImg = (ImageView*)(UIHelper::seekWidgetByName(inRecord, "showBig"));
-    
+    bigImg->setScale(getBothScale());
+
     midView = static_cast<Layout*>(UIHelper::seekWidgetByName(w, "Panel_4"));
     oldSizePer = midView->getSizePercent();
     
@@ -929,7 +1063,31 @@ void ChatView::stopRecordAndSend() {
         return;
     }
     
-    
+
+    /*
+    UserService *us = (UserService*)ServiceCenter::getInstance()->getService(ServiceCenter::USER_SERVICE);
+    User *user = us->getUser();
+    Message msg;
+    msg.sender = user->uid;
+    msg.senderName = user->realName;
+    msg.mtype = Channel::VOICE_TYPE;
+    msg.content = 
+
+    for(int i =start; i <d["data"].Size(); i++) {
+            const rapidjson::Value &b = d["data"][i];
+            msg.setData(b);
+            //消息插入到头部
+            if (inUpdate) {
+                insertMessage(&msg, ord);
+            //插入消息到尾部
+            }else {
+                insertMessage(&msg, -1);
+            }
+            ord++;
+        }
+    */
+
+
     
     CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
     
@@ -948,10 +1106,13 @@ void ChatView::stopRecordAndSend() {
     
     
     UIPanel *pan = static_cast<UIPanel*>(myvoice->clone());
+    pan->setScale(getWidScale());
+
     Button *voice = static_cast<Button*>(UIHelper::seekWidgetByName(pan, "voice2"));
     ImageView *mhead = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head3"));
     mhead->loadTexture(buf);
     
+
     
     ImageView *error = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "error"));
     
@@ -980,7 +1141,7 @@ void ChatView::stopRecordAndSend() {
     
     
     pan->setEnabled(true);
-    pan->setSize(CCSizeMake(fs.width, height));
+    pan->setSize(CCSizeMake(640, height*getWidScale()));
     pan->setSizeType(SIZE_ABSOLUTE);
     pan->setVisible(true);
     lv->pushBackCustomItem(pan);
@@ -1155,7 +1316,7 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             
             std::string text = tf->getStringValue();
             //统计字符数量
-            CCLog("send Msg %d", text.length());
+            CCLog("send Msg %d  %s", text.length(), text.c_str());
             
             tf->setText("");
             tf->setPosition(oldPos);
@@ -1175,12 +1336,22 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             
             testLabel->setString(text.c_str());
             //first test width
+            
             testLabel->setDimensions(CCSize(0, 0));
             CCSize osz = testLabel->getContentSize();
+            
             //CCSize tsz;
-            if(osz.width > lwid){
-                testLabel->setDimensions(CCSize(lwid, 0));
+
+            //增加文本图片宽度
+            if (osz.width > lwid/getWidScale())
+            {
+                testLabel->setDimensions(CCSize(lwid/getWidScale(), 0));
             }
+            
+            //if(osz.width > lwid){
+                
+            //}
+
             
             
             //宽度存在一个bug 需要+1 才能显示完整的文字 高度也可能存在这个浮点数bug
@@ -1200,21 +1371,46 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             lab2->setSize(tsz);
             //CCLog("setText %s", text.c_str());
             lab2->setText(text);
-            
-            CCLog("size is what %f %f %f %f",osz.width, osz.height, tsz.width, tsz.height);
+
+
+            //可能需要 调用 requestDoLayout 调整 UI 布局
+            //LayoutParameter *lp = lab2->getLayoutParameter(LAYOUT_PARAMETER_RELATIVE);
+            //const Margin oldMargin = lp->getMargin();
+            //lp->setMargin(Margin(oldMargin.left, oldMargin.top*getMinScale(), oldMargin.right*getMinScale(), oldMargin.bottom));
+            //CCLog("lab2 margin %f %f %f %f", oldMargin.left, oldMargin.top, oldMargin.right, oldMargin.bottom);
+
+
+
+            //CCLog("size is what %f %f %f %f",osz.width, osz.height, tsz.width, tsz.height);
             
             CCSize ws = lab2->getSize();
             CCSize hsz = head2->getSize();
             
    
-            
+            //根据宽度压缩 整个panel
+            //UIPanel *pan = static_cast<UIPanel*>(twoWord->clone());
+        
+            //Layout *myword = (Layout*)UIHelper::seekWidgetByName(w, "myword");
             UIPanel *pan = static_cast<UIPanel*>(twoWord->clone());
+
+            //Layout *innerLay = (Layout*)UIHelper::seekWidgetByName(myword, "twoWord");
+
+
+            //pan->setSizeType(SIZE_ABSOLUTE);
+            //pan->setSize(CCSizeMake(640, 216));
+            
+            CCLog("pan scale %f", getWidScale());
+
+
             ImageView *head2 = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "head2"));
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
+            chatBack->setScale(getMinScale());
+
             //高度至少大于70 才没有明显的缺口 背景框
+            //根据 缩放比例 调整 尺寸
+            chatBack->setSize(CCSizeMake(std::max(100.0f*getShrinkScale(), (ws.width+40)*getShrinkScale()), MAX(getShrinkScale()*(ws.height+textMargin), 70*getShrinkScale())));
             
-            chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
-            
+
             CCSize cbsize = chatBack->getSize();
             float height = std::max(cbsize.height, hsz.height);
             height += marginHeight;
@@ -1226,13 +1422,25 @@ void ChatView::onSend(cocos2d::CCObject *obj, TouchEventType tt){
             sprintf(buf, "flags/%d.png", user->flagId);
             head2->loadTexture(buf);
             
-            
+            //实际高度经过了缩放
+            //负责对ListView 展示
             pan->setEnabled(true);
-            pan->setSize(CCSizeMake(fs.width, height));
+            pan->setSize(CCSizeMake(640, height));
+
             pan->setSizeType(SIZE_ABSOLUTE);
             pan->setVisible(true);
             
+            pan->setScale(getWidScale());
+            
+            //负责内部布局
+            /*
+            innerLay->setSizeType(SIZE_ABSOLUTE);
+            innerLay->setSize(CCSizeMake(640, height));
+            innerLay->setScale(getWidScale());
+            */
+            
             lv->pushBackCustomItem(pan);
+
             
             //保持指针传递或者传递string更安全
             
@@ -1320,8 +1528,13 @@ void ChatView::onMsg(bool isSuc, std::string s, void *param) {
         insertHistory = true;
         //避免太多的聊天历史记录
         CCLog("getHistorymessage suc %d", s.length());
+        //CCLog("test his message %s", s.c_str());
+
         rapidjson::Document d;
         d.Parse<0>(s.c_str());
+        int ms = d["state"].GetInt();
+        CCLog("history state %d", ms);
+
         if (d["state"].GetInt() == 0) {
             return;
         }
@@ -1346,7 +1559,7 @@ void ChatView::onMsg(bool isSuc, std::string s, void *param) {
         for(int i =start; i <d["data"].Size(); i++) {
             const rapidjson::Value &b = d["data"][i];
             msg.setData(b);
-            //消息插入到头部
+            //消息插入到头部insertMessages
             if (inUpdate) {
                 insertMessage(&msg, ord);
             //插入消息到尾部
@@ -1391,6 +1604,10 @@ float ChatView::getLabelWidth() {
     
     //return lwid;
 }
+
+
+
+
 //插入历史消息不用 考虑是不是用户本身
 void ChatView::insertMessage(Message *message, int ord) {
     CCLog("insert message is  %d", ord);
@@ -1519,6 +1736,7 @@ void ChatView::insertMessage(Message *message, int ord) {
             ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
             //高度至少大于70 才没有明显的缺口 背景框
             chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
+            chatBack->setScale(getMinScale());
             
             
             char buf[512];
@@ -1533,7 +1751,9 @@ void ChatView::insertMessage(Message *message, int ord) {
             height += marginHeight;
             
             pan->setEnabled(true);
-            pan->setSize(CCSizeMake(fs.width, height));
+            pan->setSize(CCSizeMake(640, height*getWidScale()));
+            pan->setScale(getWidScale());
+
             pan->setSizeType(SIZE_ABSOLUTE);
             pan->setVisible(true);
             
@@ -1607,7 +1827,10 @@ void ChatView::insertMessage(Message *message, int ord) {
             vt->setText(rt);
             
             pan->setEnabled(true);
-            pan->setSize(CCSizeMake(fs.width, height));
+            pan->setSize(CCSizeMake(640, height*getWidScale()));
+            pan->setScale(getWidScale());
+            
+
             pan->setSizeType(SIZE_ABSOLUTE);
             pan->setVisible(true);
             
@@ -1698,7 +1921,9 @@ void ChatView::insertMessage(Message *message, int ord) {
             
             
             pan->setEnabled(true);
-            pan->setSize(CCSizeMake(fs.width, height));
+            pan->setSize(CCSizeMake(640, height*getWidScale()));
+            pan->setScale(getWidScale());
+            
             pan->setSizeType(SIZE_ABSOLUTE);
             pan->setVisible(true);
             
@@ -1767,13 +1992,16 @@ void ChatView::insertMessage(Message *message, int ord) {
         head->loadTexture(buf);
         ImageView *chatBack = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "chatBack"));
         chatBack->setSize(CCSizeMake(std::max(100.0f, ws.width+40), MAX(ws.height+textMargin, 70)));
-        
-        
+        chatBack->setScale(getMinScale());
+
+
         float height = std::max(chatBack->getSize().height, hsz.height+NAME_HEIGHT)+marginHeight;
         
         
         pan->setEnabled(true);
-        pan->setSize(CCSizeMake(fs.width, height));
+        pan->setSize(CCSizeMake(640, height*getWidScale()));
+        pan->setScale(getWidScale());
+            
         pan->setSizeType(SIZE_ABSOLUTE);
         pan->setVisible(true);
         
@@ -1807,7 +2035,10 @@ void ChatView::insertMessage(Message *message, int ord) {
         
         pan = static_cast<UIPanel*>(otherVoice->clone());
         pan->setEnabled(true);
-        pan->setSize(CCSizeMake(fs.width, height));
+        
+        pan->setSize(CCSizeMake(640, height*getWidScale()));
+        pan->setScale(getWidScale());
+            
         pan->setSizeType(SIZE_ABSOLUTE);
         pan->setVisible(true);
         
@@ -1895,7 +2126,10 @@ void ChatView::insertMessage(Message *message, int ord) {
         
         float height = std::max(hsz.height, chatBack->getSize().height)+marginHeight;
         pan->setEnabled(true);
-        pan->setSize(CCSizeMake(fs.width, height));
+        
+        pan->setSize(CCSizeMake(640, height*getWidScale()));
+        pan->setScale(getWidScale());
+            
         pan->setSizeType(SIZE_ABSOLUTE);
         pan->setVisible(true);
         
@@ -2086,7 +2320,8 @@ void ChatView::reconnectGetHistory( long long lostTime) {
 void ChatView::receiveMsg(){
     //接收该频道的消息
     if (state == 0) {
-        /*
+        //获取历史消息
+
         state = 1;
         //等待频道初始化历史消息结束
         //缓存频道消息
@@ -2097,9 +2332,9 @@ void ChatView::receiveMsg(){
         MessageService *ms = (MessageService*)ServiceCenter::getInstance()->getService(ServiceCenter::MESSAGE_SERVICE);
         ms->getHistoryMessage(m_channel->cid, this, MYHTTP_SEL(ChatView::onMsg), true);
         
-        */
+        
 
-        state = 2;
+        //state = 2;
 
         
     //从redis 服务器接收数据
@@ -2245,6 +2480,8 @@ void ChatView::sendImg(){
             
             
             UIPanel *pan = static_cast<UIPanel*>(myImg->clone());
+            
+
             //Button *vimg = static_cast<Button*>(UIHelper::seekWidgetByName(pan, "voice2"));
             ImageView *img = static_cast<ImageView*>(UIHelper::seekWidgetByName(pan, "img"));
             img->loadTexture(key, UI_TEX_TYPE_LOCAL);
@@ -2281,6 +2518,8 @@ void ChatView::sendImg(){
             
             
             float height = std::max(mhead->getSize().height, chatBack->getSize().height)+marginHeight;
+
+            CCLog("image height is %f ", height);
             //pan->setSize(CCSizeMake(fs.width, height));
             //pan->setSizeType(SIZE_ABSOLUTE);
             //pan->setVisible(true);
@@ -2290,10 +2529,12 @@ void ChatView::sendImg(){
             
             
             pan->setEnabled(true);
-            pan->setSize(CCSizeMake(fs.width, height));
+            pan->setScale(getWidScale());
+            pan->setSize(CCSizeMake(640, height*getWidScale()));
             pan->setSizeType(SIZE_ABSOLUTE);
             pan->setVisible(true);
             
+
             lv->pushBackCustomItem(pan);
             
             //发送图像文件
@@ -2499,7 +2740,9 @@ void ChatView::onText(cocos2d::CCObject *obj, TextFiledEventType tt) {
             
             tf->setTouchEnabled(false);
             CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
-            float nw = 400*fs.width/640;
+            //文本输入框 本身被缩放了 所以 宽度调整了
+            float nw = INPUT_WIDTH;
+            //*fs.width/640;
             
             
             tf->setSize(CCSizeMake(nw, fs.height));
@@ -2523,7 +2766,7 @@ void ChatView::onText(cocos2d::CCObject *obj, TextFiledEventType tt) {
         case cocos2d::ui::TEXTFIELD_EVENT_DETACH_WITH_IME:
         {
             CCSize fs = CCDirector::sharedDirector()->getVisibleSize();
-            float nw = 400*fs.width/640;
+            float nw = INPUT_WIDTH;//*fs.width/640;
             //当文本高度 高于这个高度不要 改变 只有 当点击发送的时候 才调整高度
             tf->setSize(CCSizeMake(nw, 58));
             
@@ -2596,7 +2839,7 @@ void ChatView::adjustBut() {
     
     //多行 和 单行 文本  位置不同
     if (lsz.height >= 70) {
-        tf->setPosition(ccp(oldPos.x, oldPos.y-15));
+        tf->setPosition(ccp(oldPos.x, oldPos.y-15*getWidScale()));
     }else {
         tf->setPosition(ccp(oldPos.x, oldPos.y));
     }

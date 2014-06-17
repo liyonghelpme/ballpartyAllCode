@@ -2382,6 +2382,9 @@ void CCAnimate::startWithTarget(CCNode *pTarget)
     }
     m_nNextFrame = 0;
     m_uExecutedLoops = 0;
+    
+    
+
 }
 
 void CCAnimate::stop(void)

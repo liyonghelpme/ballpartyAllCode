@@ -14,6 +14,11 @@ extern "C" {
         cocos2d::CCDirector::sharedDirector()->mainLoop();
     }
 
+    JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeCloseIME(JNIEnv *env){
+        cocos2d::CCIMEDispatcher::sharedDispatcher()->closeIME();
+    }
+    
+
     JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeOnPause() {
         CCApplication::sharedApplication()->applicationDidEnterBackground();
 

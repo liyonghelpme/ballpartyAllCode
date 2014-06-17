@@ -16,6 +16,7 @@
 #include "MatchService.h"
 #include "MessageService.h"
 extern string serverRedis;
+extern string openU;
 
 class ServiceCenter : public cocos2d::CCObject{
 public:

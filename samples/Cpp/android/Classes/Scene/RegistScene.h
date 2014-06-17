@@ -47,6 +47,7 @@ public:
     virtual void onExit();
     virtual void update(float diff);
 
+    virtual void keyBackClicked();
 private:
     CCSize ksize;
     UIPanel *rootPerfect;

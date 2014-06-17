@@ -40,6 +40,7 @@ bool LoginScene::init(){
 
     return true;
 }
+
 void LoginScene::onEnter(){
     CCLayer::onEnter();
 	TouchGroup* ui = TouchGroup::create();
@@ -69,19 +70,45 @@ void LoginScene::onEnter(){
     //}
 
     UIImageView *logo = (UIImageView*)UIHelper::seekWidgetByName(loginWidget, "logoImage");
+
+    float sca = std::min(fs.width/640, fs.height/960);
+    logo->setScale(sca);
+
+    ImageView *userIcon = (ImageView *)UIHelper::seekWidgetByName(loginWidget, "userIcon");
+    userIcon->setScale(sca);
+
+    ImageView *userIconBg = (ImageView *)UIHelper::seekWidgetByName(loginWidget, "userIconBg");
+    userIconBg->setScale(sca);    
+
+    ImageView *userLi = (ImageView*)UIHelper::seekWidgetByName(loginWidget, "usernameLiImage");
+    TextField *usernameInput = (TextField*)UIHelper::seekWidgetByName(loginWidget, "username");
+    //userLi->setScale(sca);
+    usernameInput->setScale(sca);
+
+    ImageView *passwordLi = (ImageView*)UIHelper::seekWidgetByName(loginWidget, "passwordLiImage");
+    //passwordLi->setScale(sca);
+    
+    TextField *passwordInput = (TextField*)UIHelper::seekWidgetByName(loginWidget, "password");
+    passwordInput->setScale(sca);
+
+
     UIButton* loginBtn = (UIButton*)UIHelper::seekWidgetByName(loginWidget, "loginButton");
     //login_panel->getChildByTag(8);
     loginBtn->addTouchEventListener(this,toucheventselector(LoginScene::loginPress));
     
 
-    float ms = std::min(fs.width/640, fs.height/960);
-    if (ms < 1)
-    {
-        logo->setScale(ms);
-        loginBtn->setScale(ms);
-    }
+    //float ms = std::min(fs.width/640, fs.height/960);
+    //if (ms < 1)
+   // {
+        //logo->setScale(ms);
+    loginBtn->setScale(sca);
+    //}
+    Button *regB = (Button*)UIHelper::seekWidgetByName(loginWidget, "regButton");
+    regB->setScale(sca);
 
 
+    UIButton* topBtn = (UIButton*)UIHelper::seekWidgetByName(loginWidget, "tabLoginButton");
+    topBtn->setScale(sca);
 
     CCLog("init UIPanel");
 
@@ -109,20 +136,7 @@ void LoginScene::onEnter(){
 
 
     //密码
-    /*
-    m_passWord = CCEditBox::create(CCSize(320,50), CCScale9Sprite::createWithSpriteFrameName("button.png"));
-	m_passWord->setFontSize(23);
-	m_passWord->setAnchorPoint(CCPointZero);
-	m_passWord->setPlaceHolder("请输入密码");
-    m_passWord->setPlaceholderFontColor(ccc3(248,252,255));
-	m_passWord->setInputMode(kEditBoxInputModeAny);
-    m_passWord->setInputFlag(kEditBoxInputFlagPassword);
-	m_passWord->setReturnType(kKeyboardReturnTypeDone);
-	m_passWord->setPosition(ccp(153,310));
-	m_passWord->setDelegate(this);
-	m_passWord->setTouchPriority(0);
-    */
-
+  
     
     
     UIButton* registerBtn = (UIButton*)UIHelper::seekWidgetByName(loginWidget, "regButton");
@@ -229,6 +243,7 @@ void LoginScene::refurbishScene(){
     
     CCPoint upos = username->getPosition();
 
+    //CCLog("");
     //username->setPosition(ccp(upos.x, usernamePoint.y - 15));
 
 
@@ -256,7 +271,7 @@ void LoginScene::refurbishScene(){
         
         usernameLable->setVisible(false);
         
-        UILabel* iconNameLabel = (UILabel*)UIHelper::seekWidgetByName(loginWidget, "usernameLable");
+        UILabel* iconNameLabel = (UILabel*)UIHelper::seekWidgetByName(loginWidget, "usernameLabel");
         //userIcon->getChildByTag(47);
         iconNameLabel->setText(loginNmaeKey.c_str());
         

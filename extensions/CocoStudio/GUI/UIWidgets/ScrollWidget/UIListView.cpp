@@ -100,7 +100,8 @@ void ListView::updateInnerContainerSize()
             for (int i=0; i<length; i++)
             {
                 Widget* item = static_cast<Widget*>(arrayItems->arr[i]);
-                totalHeight += item->getSize().height;
+                float sca  = item->getScale();
+                totalHeight += item->getSize().height*sca;
             }
             float finalWidth = _size.width;
             float finalHeight = totalHeight;

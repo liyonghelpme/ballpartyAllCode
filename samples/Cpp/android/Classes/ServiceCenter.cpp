@@ -15,6 +15,8 @@
 
 string serverRedis = "ballparty.dozengame.com";
 
+string openU = "http://ballparty.dozengame.com:91/support/copyright";
+
 
 //android 模拟器主机 ip
 //string serverRedis = "10.0.3.2";

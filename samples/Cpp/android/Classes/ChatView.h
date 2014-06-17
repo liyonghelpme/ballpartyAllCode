@@ -48,6 +48,10 @@ public:
     ~ChatView();
     virtual void onEnter();
     virtual void onExit();
+
+
+    virtual void keyBackClicked();
+    
 private:
     void checkKeyBoard();
 

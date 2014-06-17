@@ -27,6 +27,8 @@
 
 NS_CC_BEGIN
 
+#include <vector>
+
 namespace ui {
 
 /**
@@ -73,6 +75,10 @@ public:
     
     /*temp action*/
     static Widget* seekActionWidgetByActionTag(Widget* root, int tag);
+    
+    
+    //寻找所有 Label 类型的 widget
+    static std::vector<Widget*> *seekWidgetByLabel(Widget *root, std::vector<Widget*> *, const char *wtype);
 };
 }
 

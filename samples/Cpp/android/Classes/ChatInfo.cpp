@@ -24,6 +24,11 @@ CCScene *ChatInfo::scene(){
     return scene;
 }
 
+void ChatInfo::keyBackClicked() {
+    CCDirector::sharedDirector()->popSceneWithTransition(transTime);
+    //curInScene = NULL;
+}
+
 bool ChatInfo::init(){
     if ( !CCLayer::init() )
     {
@@ -31,7 +36,8 @@ bool ChatInfo::init(){
     }
     getYet = false;
     
-    
+    setKeypadEnabled(true);
+
     
     CCSize size = CCDirector::sharedDirector()->getVisibleSize();
     CCLog("winSize %f %f", size.width, size.height);
@@ -43,9 +49,56 @@ bool ChatInfo::init(){
     lay->addWidget(w);
     w->setSize(size);
     
+
+
+    float sca = std::min(size.width/640, size.height/960);
+    std::vector<Widget *> wids;
+    char *kind[] = {
+        "Label",
+        "Button",
+        //"ImageView",
+        //"TextField",
+        NULL,
+    };
+
+    Layout *p1 = (Layout*)UIHelper::seekWidgetByName(w, "Panel_1");
+
+    //不用百分比 原因是 百分比会导致 对象扭曲掉 因此采用设定scale的 方案 而不是 size的方案
+    for(int i = 0; kind[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(p1, &wids, kind[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+
+
+
+
     row = static_cast<Layout*>(UIHelper::seekWidgetByName(w, "row"));
     row->setEnabled(false);
-    
+    char *kind2[] = {
+        "Label",
+        //"ImageView",
+        //"TextField",
+        NULL,
+    };
+    //不用百分比 原因是 百分比会导致 对象扭曲掉 因此采用设定scale的 方案 而不是 size的方案
+    for(int i = 0; kind2[i] != NULL; i++) {
+        UIHelper::seekWidgetByLabel(row, &wids, kind2[i]);
+        CCLog("widget number %d", wids.size());
+        for(int i = 0; i < wids.size(); i++) {
+            Widget *w = wids[i];
+            w->setScale(sca);
+        }
+        wids.clear();
+    }
+
+
+
     lv = static_cast<ListView*>(UIHelper::seekWidgetByName(w, "ListView_5"));
     
     /*

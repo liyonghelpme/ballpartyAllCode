@@ -23,6 +23,8 @@ public:
     static cocos2d::CCScene* scene();
     CREATE_FUNC(ChatInfo);
 
+    virtual void keyBackClicked();
+    
 private:
     void onPeople(CCObject*, TouchEventType);
     

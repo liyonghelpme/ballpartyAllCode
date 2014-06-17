@@ -30,6 +30,7 @@ import org.cocos2dx.lib.Cocos2dxActivity;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 import org.cocos2dx.lib.Cocos2dxHelper;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -39,15 +40,22 @@ import android.os.Bundle;
 import android.util.Log;
 
 public class TestCpp extends Cocos2dxActivity{
-	
+	public static Activity thisAct;
     protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);	
 		Cocos2dxHelper.init();
 		MyAudio.init(this);
 		MyImage.setAct(this);
+		
+		thisAct = this;
     }
     
-
+    public static void openURL(String url) {
+    	Uri uri = Uri.parse(url);
+    	Intent it = new Intent(Intent.ACTION_VIEW, uri);
+    	thisAct.startActivity(it);
+    	
+    }
     public Cocos2dxGLSurfaceView onCreateView() {
     	Cocos2dxGLSurfaceView glSurfaceView = new Cocos2dxGLSurfaceView(this);
     	// TestCpp should create stencil buffer

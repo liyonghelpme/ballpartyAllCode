@@ -36,6 +36,11 @@ bool Loading::init(){
     sp->setPosition(ccp(vs.width/2, vs.height/2));
     addChild(sp);
 
+    CCSize bs = sp->getContentSize();
+    float sca = std::max(vs.width/bs.width, vs.height/bs.height);
+    sp->setScale(sca);
+    //缩放全屏
+
 
     scheduleUpdate();
 

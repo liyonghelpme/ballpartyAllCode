@@ -894,7 +894,9 @@ void Layout::doLayout()
                     CCPoint ap = child->getAnchorPoint();
                     CCSize cs = child->getSize();
                     float finalPosX = ap.x * cs.width;
-                    float finalPosY = topBoundary - ((1.0f-ap.y) * cs.height);
+                    float scale = child->getScale();
+                    //根据孩子的 scale缩放 height
+                    float finalPosY = topBoundary - ((1.0f-ap.y) * cs.height*scale);
                     switch (childGravity)
                     {
                         case LINEAR_GRAVITY_NONE:

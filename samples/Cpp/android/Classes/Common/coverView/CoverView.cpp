@@ -84,11 +84,18 @@ bool CoverView::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 void CoverView::ccTouchMoved(CCTouch* pTouch, CCEvent* pEvent)  
 {  
     CCPoint scroll_prepoint = pTouch->getPreviousLocation();  
-    CCPoint scroll_movepoint = pTouch->getLocation();  
-    if(swBox.containsPoint(scroll_movepoint))  
+    CCPoint scroll_movepoint = pTouch->getLocation();
+    float scale = getScale();
+
+
+    //node 本身被缩放了 所以 需要调整一下宽度 和 高度
+    CCRect nsz = CCRectMake(swBox.origin.x, swBox.origin.y, swBox.size.width*scale, swBox.size.height*scale);
+
+    if(nsz.containsPoint(scroll_movepoint))  
     {
         selectBg->setVisible(false);
         CCPoint adjustPoint = scroll_movepoint-scroll_prepoint;  
+        adjustPoint.x /= scale;
         adjustScrollView(adjustPoint);    
         adjustCardScale(adjustPoint);  
     }  
